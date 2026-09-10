@@ -22,59 +22,30 @@ function aiCached(id) {
   return AIS[id];
 }
 
-/* картинку задачи переводим в data:URL — SVG рисуем на канве */
-function taskPic(q) {
-  return new Promise(resolve => {
-    const box = document.createElement("div");
-    box.innerHTML = q.html || "";
-    const el = box.querySelector("img:not(.tex)");
-    if (!el) return resolve(null);
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const w = img.naturalWidth || 600, h = img.naturalHeight || 400, k = Math.min(2, 900 / w);
-        const c = document.createElement("canvas");
-        c.width = Math.round(w * k); c.height = Math.round(h * k);
-        const g = c.getContext("2d");
-        g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
-        g.drawImage(img, 0, 0, c.width, c.height);
-        resolve(c.toDataURL("image/png"));
-      } catch (e) { resolve(null); }
-    };
-    img.onerror = () => resolve(null);
-    img.src = el.getAttribute("src");
-  });
-}
-
-function aiPrompt(q, pic) {
+function aiPrompt(q) {
   const f = (q.formulas || [q.formula || {}])[0] || {};
-  const hint = f.f ? `\nПодсказка для тебя (ученику её не показывай дословно): эта задача решается формулой ${f.f}. ${f.why || ""}` : "";
+  const hint = f.f ? `\n\nПодсказка для тебя, ученику её дословно не показывай: задача решается формулой ${f.f}. ${f.why || ""}` : "";
   return `Ты объясняешь школьнику, который только начал физику и половину слов в задании не понимает.
 
 Вот задание ЕГЭ дословно:
 «${(q.plain || "").replace(/\s+/g, " ").trim()}»
-${pic ? "\nК заданию приложена картинка — посмотри на неё внимательно." : ""}
 
-Перескажи задание доступным языком. Ответь ровно в таком формате, без markdown и без звёздочек:
+Картинку ты не видишь. Не выдумывай, что на ней нарисовано, и не описывай её — говори только то, что прямо следует из текста задания.
+
+Перепиши это задание простым языком. Ответь ровно в таком формате, без markdown и без звёздочек:
 
 ПЕРЕСКАЗ
-Два-три коротких предложения обычными словами: что происходит в задаче${pic ? " и что нарисовано на картинке — что по осям и как ведёт себя линия" : ""}. Коротко, как другу. Без физических терминов и без перечисления всех чисел со шкалы.
-
-СЛОВА
-Построчно, каждый термин из условия с новой строки в виде «термин — объяснение». Разбери всё, что новичок может не понять: проекция, координата, ускорение, модуль, обозначения вроде v_x, a_x и маленькие индексы. В каждой строке скажи и что это значит, и почему в задании написано именно так.
-
-ЧТО ХОТЯТ
-Одно-два предложения бытовым языком: что именно требуется найти и в каких единицах записать ответ.
+Связный текст на четыре-шесть предложений. Перескажи задание так, как объяснил бы младшему брату. Каждое непонятное слово раскрывай прямо по ходу, в том же предложении, а не отдельным списком: вместо «найди проекцию скорости» пиши «найди скорость со знаком — плюс, если тело едет в одну сторону, минус, если в обратную». Так же разбери обозначения: если в задании написано v с маленькой x, скажи, что это значит. Закончи тем, что именно нужно найти и в каких единицах записать ответ. Не используй слова «проекция», «модуль», «равноускоренный» без немедленного объяснения тут же.
 
 ЛОГИКА
-Самое главное. Объясни новичку, за что тут хвататься и почему. По пунктам, каждый пункт с новой строки:
-— по какому признаку в условии понятно, что делать именно так (что дано, что спрашивают);
+За что хвататься. По пунктам, каждый с новой строки:
+— по какому признаку в тексте видно, что делать именно так;
 — какая формула тут работает и почему подходит именно она;
 — в каком порядке действовать: что найти первым, что вторым;
 — где в такой задаче обычно ошибаются.
-Пиши так, будто человек видит подобную задачу впервые и не понимает, с какой стороны подойти.
+Пиши так, будто человек видит подобную задачу впервые.
 
-Не решай задачу, не подставляй числа и не называй ответ — только логика.${hint}`;
+Не решай задачу, не подставляй числа и не называй ответ.${hint}`;
 }
 
 async function aiExplain(id) {
@@ -86,11 +57,7 @@ async function aiExplain(id) {
   render();
 
   try {
-    const pic = await taskPic(q);
-    const text = aiPrompt(q, pic);
-    const content = pic
-      ? [{ type: "text", text: text }, { type: "image_url", image_url: { url: pic } }]
-      : text;
+    const content = aiPrompt(q);
     const r = await fetch(AI_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + aiKey() },
@@ -101,17 +68,10 @@ async function aiExplain(id) {
     const out = (((j.choices || [])[0] || {}).message || {}).content || "";
     if (!out.trim()) throw new Error("модель вернула пустой ответ");
 
-    const m = out.split(/\n\s*СЛОВА\s*\n/i);
-    const rest = (m[1] || "").split(/\n\s*ЧТО\s+ХОТЯТ\s*\n/i);
-    const tail2 = (rest[1] || "").split(/\n\s*ЛОГИКА\s*\n/i);
+    const m = out.split(/\n\s*ЛОГИКА\s*\n/i);
     const retell = (m[0] || "").replace(/^\s*ПЕРЕСКАЗ\s*\n?/i, "").trim();
-    const want = (tail2[0] || "").trim();
-    const logic = (tail2[1] || "").trim();
-    const words = (rest[0] || "").split("\n").map(x => x.trim()).filter(Boolean)
-      .map(x => x.replace(/^[-–—•\d.)\s]+/, ""))
-      .map(x => { const i = x.search(/\s[—–-]\s/); return i > 0 ? [x.slice(0, i), x.slice(i + 3)] : null; })
-      .filter(Boolean);
-    AIS[id] = { retell: retell, words: words, want: want, logic: logic, pic: !!pic, model: aiModel() };
+    const logic = (m[1] || "").trim();
+    AIS[id] = { retell: retell, logic: logic, model: aiModel() };
     try { localStorage.setItem("ai:" + id, JSON.stringify(AIS[id])); } catch (e) {}
   } catch (e) {
     AIS[id] = { err: String(e.message || e) };
@@ -124,11 +84,11 @@ function aiBlockHTML(q) {
   const st = aiCached(q.id);
   if (!st) {
     return `<button class="simpler" data-act="simpler" data-id="${q.id}">
-      Объяснить проще<span>пересказ обычными словами, разбор картинки и терминов</span></button>`;
+      Объяснить проще<span>то же задание, но обычными словами</span></button>`;
   }
   if (st.load) {
     return `<div class="aibox load"><div class="ai-bar"><i></i></div>
-      <div class="ai-wait">Читаю условие и смотрю на картинку…</div></div>`;
+      <div class="ai-wait">Переписываю условие простыми словами…</div></div>`;
   }
   if (st.err) {
     return `<div class="aibox err"><b>Не вышло объяснить</b><span>${esc(st.err)}</span>
@@ -137,15 +97,11 @@ function aiBlockHTML(q) {
   }
   return `<div class="aibox">
     <div class="ai-h">задача обычными словами</div>
-    ${st.retell.split(/\n+/).map(x => `<p class="ai-p">${esc(x)}</p>`).join("")}
-    ${(st.words || []).length ? `<div class="ai-h">что значат слова</div>
-      <dl class="ai-w">${st.words.map(w => `<dt>${esc(w[0])}</dt><dd>${esc(w[1])}</dd>`).join("")}</dl>` : ""}
-    ${st.want ? `<div class="ai-h">что от тебя хотят</div>
-      ${st.want.split(/\n+/).map(x => `<p class="ai-p">${esc(x)}</p>`).join("")}` : ""}
+    ${(st.retell || "").split(/\n+/).map(x => `<p class="ai-p">${esc(x)}</p>`).join("")}
     ${st.logic ? `<div class="ai-h">за что хвататься</div>
       <ul class="ai-l">${st.logic.split(/\n+/).map(x =>
         `<li>${esc(x.replace(/^[-–—•*\d.)\s]+/, ""))}</li>`).join("")}</ul>` : ""}
-    <div class="ai-foot">Пересказал ${esc(st.model || "")}${st.pic ? ", картинку он видел" : ""}.
+    <div class="ai-foot">Пересказал ${esc(st.model || "")}, картинку он не смотрел.
       <button class="lnk" data-act="aidrop2" data-id="${q.id}">объяснить заново</button></div>
   </div>`;
 }
@@ -154,9 +110,9 @@ function aiSetupSheet(id) {
   openSheet(`<h3>Подключить объяснялку</h3>
     <p class="card-text">Разборы по шагам написаны заранее и работают без сети. Нейросеть нужна для другого —
       пересказать условие доступным языком и расшифровать термины. Для неё нужен токен.</p>
-    <p class="card-text">Уходит текст задания и картинка к нему — модель смотрит на график и говорит,
-      что на нём нарисовано. Ключ хранится в этом браузере и идёт прямо в шлюз aitunnel. Старый ключ,
-      который ты присылал в переписке, брать нельзя: он засвечен, заведи новый.</p>
+    <p class="card-text">Уходит только текст задания, картинки не отправляются. Ключ хранится
+      в этом браузере и идёт прямо в шлюз aitunnel. Старый ключ, который ты присылал в переписке,
+      брать нельзя: он засвечен, заведи новый.</p>
     <div class="lab">Ключ</div>
     <input type="password" id="aik" placeholder="sk-..." value="${esc(aiKey())}" autocomplete="off">
     <div class="lab">Модель</div>
