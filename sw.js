@@ -1,5 +1,5 @@
-const CACHE = "ege-mark-v3";
-const FILES = ["./", "index.html", "style.css", "app.js", "lesson.js", "cycle.js", "math.js", "ai.js", "data.js", "icon.svg", "manifest.webmanifest"];
+const CACHE = "ege-mark-v4";
+const FILES = ["./", "index.html", "style.css", "app.js", "lesson.js", "cycle.js", "math.js", "ai.js", "book.js", "data.js", "icon.svg", "manifest.webmanifest"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });

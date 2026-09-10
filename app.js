@@ -1438,12 +1438,15 @@ function render() {
     : view === "num"     ? renderNum()
     : view === "subs"    ? renderSubs()
     : view === "cycle"   ? renderCycle()
+    : view === "book"    ? renderBook()
     : view === "week"    ? renderHome()
     : view === "track"   ? renderTrack() : renderStats();
   document.body.classList.toggle("in-lesson", view === "lesson" || view === "cycle");
   document.body.classList.toggle("parent", isParent());
   renderTop();
+  $$(".tab").forEach(b => b.classList.toggle("on", b.dataset.v === view));
   if (view === "week") bootHome();
+  if (view === "book" && BOOK[bookKey] === undefined) loadBook(bookKey).then(render);
 }
 
 function cycleStat(sid, n) {
@@ -1514,6 +1517,8 @@ document.addEventListener("click", e => {
   if (a === "aiforget") { aiForget(); return; }
   if (a === "aidrop2") { aiAgain(t.dataset.id); return; }
   if (a === "qpick") { setQStep(t.dataset.id, "p" + t.dataset.i, +t.dataset.o + 1); render(); return; }
+  if (a === "bkch") { const i = +t.dataset.i; bookOpen[i] = bookOpen[i] === false; render(); return; }
+  if (a === "more") { moreOn[t.dataset.k] = 1; render(); return; }
   if (a === "qack") { setQStep(t.dataset.id, "i" + t.dataset.i, 1); render(); return; }
   if (a === "trm") { const id = t.dataset.id; tOpen[id] = !tOpen[id]; render(); return; }
   if (a === "frm") { const id = t.dataset.id; fOpen[id] = !fOpen[id]; render(); return; }

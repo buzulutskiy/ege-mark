@@ -191,9 +191,13 @@ function qById(id) {
   return q ? Object.assign({}, q, (QX[curSubj] || {})[id] || {}) : null;
 }
 
+const moreOn = {};
+function cycKey(g) { return (g.key || g.title || "") + ":" + (g.tasks || []).length; }
+
 function cycTasks(g) {
   const list = BANK[curSubj] || [], qx = QX[curSubj] || {};
-  return (g.tasks || []).map(id => {
+  const ids = (g.tasks || []).concat(moreOn[cycKey(g)] ? (g.more || []) : []);
+  return ids.map(id => {
     const q = list.find(x => x.id === id);
     return q ? Object.assign({}, q, qx[id] || {}) : null;
   }).filter(Boolean);
@@ -420,7 +424,10 @@ function renderCycle() {
       return `<button class="tl${k === cycIdx ? " now" : ""}${r ? (r.ok ? " ok" : " no") : ""}"
         data-act="goq" data-k="${k}">${k + 1}</button>`;
     }).join("")}</div>
-    <div class="tl-n">Зелёные — решены верно, красные — были ошибки. Вид закрыт, когда зелёные все.</div></div>`;
+    <div class="tl-n">Зелёные — решены верно, красные — были ошибки. Вид закрыт, когда зелёные все.</div>
+    ${(g.more || []).length && !moreOn[cycKey(g)]
+      ? `<button class="add" data-act="more" data-k="${esc(cycKey(g))}">
+          Ещё ${g.more.length} похожих задач — на второй круг</button>` : ""}</div>`;
 
   h += `<div class="ls-nav">
       <button class="ghost half" data-act="qprev"${cycIdx ? "" : " disabled"}>Назад</button>

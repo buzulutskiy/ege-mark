@@ -886,3 +886,44 @@ body.in-lesson main{padding-bottom:110px}
 .ai-l{margin:0;padding-left:20px}
 .ai-l li{margin:0 0 7px;font-size:15.5px;line-height:1.5;color:var(--ink)}
 .ai-l li::marker{color:var(--mute)}
+
+/* ── учебник ────────────────────────────── */
+.tabs-wrap{order:1;display:flex;gap:6px;padding:10px 16px 0;max-width:660px;margin:0 auto;width:100%}
+.tab{flex:1;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+  font-size:14px;font-weight:600;color:var(--mute)}
+.tab.on{background:var(--card);color:var(--ink);border-color:var(--line);box-shadow:var(--shadow)}
+body.in-lesson .tabs-wrap{display:none}
+.bk-top{margin:6px 0 4px}
+.bk-ti{font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+.bk-sub{font-size:13px;color:var(--mute);margin-top:2px}
+.bk-lead{font-size:17px;line-height:1.6;color:var(--dim);margin:12px 0 18px}
+.bk-keep{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px 18px;margin-bottom:18px;box-shadow:var(--shadow)}
+.bk-keep-t{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);
+  font-weight:700;margin-bottom:12px}
+.bk-keep ol{margin:0;padding-left:20px}
+.bk-keep li{margin-bottom:11px}
+.bk-keep li .m{font-size:18px;font-weight:600}
+.bk-keep li span{display:block;font-size:13px;color:var(--mute);margin-top:2px}
+.bk-ch{border:1px solid var(--line);border-radius:var(--r);background:var(--card);
+  margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+.bk-h{display:flex;align-items:center;gap:11px;width:100%;padding:15px 17px;
+  background:none;border:none;text-align:left}
+.bk-n{flex:0 0 24px;height:24px;border-radius:50%;background:var(--card2);color:var(--mute);
+  font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.bk-h b{flex:1;font-size:16.5px;font-weight:700;color:var(--ink);line-height:1.35}
+.bk-h i{flex:0 0 auto;font-style:normal;font-size:12px;color:var(--mute)}
+.bk-b{padding:0 17px 17px}
+.bk-p{margin:0 0 11px;font-size:16px;line-height:1.6;color:var(--ink)}
+.bk-d{margin:14px 0 0;padding:14px 16px;background:var(--card2);border-radius:11px}
+.bk-d dt{font-weight:700;font-size:15px;color:var(--ink);margin-top:11px}
+.bk-d dt:first-child{margin-top:0}
+.bk-d dd{margin:2px 0 0;font-size:15px;line-height:1.5;color:var(--dim)}
+.bk-f{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.bk-fi{padding:13px 15px;background:var(--card2);border-radius:11px;text-align:center}
+.bk-fi b{display:block}
+.bk-fi b .m{font-size:20px;font-weight:600}
+.bk-fi span{display:block;font-size:13px;color:var(--mute);margin-top:5px}
+.bk-t{margin-top:14px;padding:12px 14px;border-radius:11px;background:var(--badbg)}
+.bk-t span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--bad);font-weight:700;margin-bottom:4px}
