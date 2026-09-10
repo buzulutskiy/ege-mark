@@ -409,12 +409,12 @@ function subjChip(sid, extra) {
 let showPlan = false;
 
 function renderHome() {
-  const sub = SUB.fiz, m = MAP.fiz || {};
-  const row = n => {
-    const t = sub.byN[n], st = numStat("fiz", n), d = m[String(n)];
+  const row = (sid, n) => {
+    const sub = SUB[sid], m = MAP[sid] || {}, t = sub.byN[n];
     if (!t) return "";
+    const st = numStat(sid, n), d = m[String(n)];
     const name = (d && d.name) || t.name;
-    return `<button class="numrow big" data-act="num" data-n="${n}" style="--c:${sub.color}">
+    return `<button class="numrow big" data-act="num" data-n="${n}" data-s="${sid}" style="--c:${sub.color}">
       <span class="nr-n">${n}</span>
       <span class="nr-b"><b>${esc(name)}</b>
         <i>${d ? plural(d.groups.length, "приём", "приёма", "приёмов") + " · " + d.total + " задач"
@@ -424,9 +424,12 @@ function renderHome() {
     </button>`;
   };
   return `<h4 class="sec first">Сентябрь · физика</h4>
-    ${SEPT_FIZ.map(row).join("")}
-    <p class="foot">Гидростатика и профильная математика — на подходе.</p>`;
+    ${SEPT_FIZ.map(n => row("fiz", n)).join("")}
+    <h4 class="sec">Сентябрь · профильная математика</h4>
+    ${SEPT_MAT.map(n => row("mat", n)).join("")}
+    <p class="foot">Дальше по математике идут степени и логарифмы, потом неравенства.</p>`;
 }
+
 
 function renderWeek(inner) {
   const ws = weekCursor, we = addDays(ws, 6);
@@ -1387,11 +1390,13 @@ function solvedToday() {
   return n;
 }
 
-const SEPT_FIZ = [1, 2, 4];              /* темы физики на сентябрь */
+const SEPT_FIZ = [1, 2, 4];
+const SEPT_MAT = [7];              /* темы физики на сентябрь */
 
 function dayNorm() {
   let done = 0, total = 0;
   SEPT_FIZ.forEach(n => { const x = topicProgress("fiz", n); if (x) { done += x.done; total += x.total; } });
+  SEPT_MAT.forEach(n => { const x = topicProgress("mat", n); if (x) { done += x.done; total += x.total; } });
   const p = { done: done, total: total };
   if (!p.total) return null;
   const deadline = endOfMonth(today());
@@ -1409,7 +1414,7 @@ function renderTop() {
   const dl = diffDays(today(), d);
   const el = $("#count"); if (!el) return;
   el.innerHTML = dl >= 0
-    ? `<b>${plural(dl, "день", "дня", "дней")}</b> до экзамена по физике`
+    ? `<b>${plural(dl, "день", "дня", "дней")}</b> до первого экзамена`
     : `Экзамен по физике позади`;
 
   const row = $("#dayrow"), dl2 = $("#deadline");
@@ -1419,9 +1424,9 @@ function renderTop() {
   if (dl2) {
     const w2 = (n, a, b, c) => { const x = Math.abs(n) % 100, y = x % 10;
       return x > 10 && x < 20 ? c : y === 1 ? a : y > 1 && y < 5 ? b : c; };
-    const names = SEPT_FIZ.map(n => ((MAP.fiz || {})[String(n)] || {}).name
-        || (SUB.fiz.byN[n] || {}).name || "")
-      .map(x => x.split(":")[0].toLowerCase()).filter(Boolean);
+    const nm1 = sid => n => (((MAP[sid] || {})[String(n)] || {}).name
+        || (SUB[sid].byN[n] || {}).name || "").split(":")[0].toLowerCase();
+    const names = SEPT_FIZ.map(nm1("fiz")).concat(SEPT_MAT.map(nm1("mat"))).filter(Boolean);
     const nm = names.length > 2 ? names.slice(0, -1).join(", ") + " и " + names[names.length - 1]
              : names.join(" и ");
     dl2.innerHTML = k.rest
@@ -1442,7 +1447,14 @@ function renderTop() {
 }
 
 async function bootHome() {
-  if (!MAP.fiz) { await loadBank("fiz"); await loadMap("fiz"); await loadQX("fiz"); await loadForm("fiz"); curSubj = "fiz"; render(); }
+  let need = false;
+  for (const sid of ["fiz", "mat"]) {
+    if (!MAP[sid]) {
+      await loadBank(sid); await loadMap(sid); await loadQX(sid); await loadForm(sid);
+      need = true;
+    }
+  }
+  if (need) { curSubj = curSubj || "fiz"; render(); }
 }
 
 function render() {
@@ -1489,7 +1501,10 @@ document.addEventListener("click", e => {
   if (a === "start") { openSubject(t.dataset.sid); return; }
   if (a === "home") { view = "week"; render(); window.scrollTo(0, 0); return; }
   if (a === "subject") { view = "subject"; render(); window.scrollTo(0, 0); return; }
-  if (a === "num") { curNum = +(t.dataset.n || curNum); view = "num"; render(); window.scrollTo(0, 0); return; }
+  if (a === "num") {
+    if (t.dataset.s && t.dataset.s !== curSubj) curSubj = t.dataset.s;
+    curNum = +(t.dataset.n || curNum); view = "num"; render(); window.scrollTo(0, 0); return;
+  }
   if (a === "cycall") { enterCycle(curCyc); return; }
   if (a === "back-cyc") {
     const d = (MAP[curSubj] || {})[String(curNum)];
