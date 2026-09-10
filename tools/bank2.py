@@ -114,21 +114,29 @@ def clean(frag):
 
 
 def categories(sid):
-    """Листовые категории каталога: (id, «Д<номер> · тема»)."""
+    """Листовые категории каталога: (id, тема, номер задания).
+       Номер лежит в <span class="pcat_num">, тема — текст после последнего </span>.
+       Старые разделы «Задания ДN» пропускаем: у них своя нумерация прошлых лет."""
     page = get(HOST[sid] + "/prob_catalog")
-    out, seen = [], set()
-    # каждый раздел: <b class="cat_name">…Задания Д7. Тема</b> … <div class="cat_children"> …category_id=NNN…
+    best = {}                                   # cid → (тема, номер): пронумерованный раздел важнее
+    order = []
     for m in re.finditer(r'<b class="cat_name">(.*?)</b>(.*?)(?=<b class="cat_name">|\Z)', page, re.S):
-        head = txt(m.group(1))
-        head = re.sub(r"^\s*[ТT]\s*", "", head)          # значок «теория» слева от названия
-        num = re.search(r"^\s*(?:Задани[ея]\s*[ДCВB]?)?\s*(\d+)\s*\.", head)
-        theme = re.sub(r"^(Задани[ея]\s*[^.]*|\s*[\d.]+)\s*\.\s*", "", head).strip() or head
+        head_raw, body = m.group(1), m.group(2)
+        num = re.search(r'<span class="pcat_num">(\d+)</span>', head_raw)
+        tail = head_raw.rsplit("</span>", 1)[-1] if "</span>" in head_raw else head_raw
+        head = txt(re.sub(r"<[^>]+>", " ", tail)).strip()
+        if not num:
+            legacy = re.search(r"Задани[ея]\s*[ДCВB]\s*(\d+)", txt(re.sub(r"<[^>]+>", " ", head_raw)))
+            if legacy:
+                continue                                  # старая нумерация — мимо
         task = int(num.group(1)) if num else 0
-        for cid in re.findall(r"category_id=(\d+)", m.group(2)):
-            if cid in seen:
-                continue
-            seen.add(cid)
-            out.append((cid, theme, task))
+        theme = re.sub(r"^[\s.\d]+", "", head).strip() or head
+        for cid in re.findall(r"category_id=(\d+)", body):
+            if cid not in best:
+                order.append(cid)
+            if cid not in best or (task and not best[cid][1]):
+                best[cid] = (theme[:80], task)
+    out = [(cid, best[cid][0], best[cid][1]) for cid in order]
     return out
 
 
@@ -167,7 +175,9 @@ def parse(sid, page, theme, imgdir, task=0):
             frag = frag.replace(src, "bank/img/" + name)
             imgs.append(name)
         plain = txt(frag)
-        if len(plain) < 40:
+        if len(plain) < 40 and not imgs:
+            continue                                    # в математике вся задача бывает одной картинкой-формулой
+        if len(plain) < 12 and not imgs:
             continue
         out.append({"id": "sd" + pid, "subj": sid, "task": task,
                     "name": NAMES.get(task, ""), "kes": [theme], "type": "Краткий ответ",
