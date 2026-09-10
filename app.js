@@ -425,9 +425,12 @@ function renderHome() {
   };
   return `<h4 class="sec first">Сентябрь · физика</h4>
     ${SEPT_FIZ.map(n => row("fiz", n)).join("")}
-    <h4 class="sec">Сентябрь · профильная математика</h4>
+    <h4 class="sec">Сентябрь · математика, база</h4>
     ${SEPT_MAT.map(n => row("mat", n)).join("")}
-    <p class="foot">Дальше по математике идут степени и логарифмы, потом неравенства.</p>`;
+    <h4 class="sec">Сентябрь · математика, часть 2</h4>
+    <p class="foot" style="margin:0 0 10px">Здесь ответ — развёрнутое решение, а не число. Задачи
+      разложены по приёмам, к каждой есть официальный разбор.</p>
+    ${SEPT_MAT2.map(n => row("mat", n)).join("")}`;
 }
 
 
@@ -1391,7 +1394,8 @@ function solvedToday() {
 }
 
 const SEPT_FIZ = [1, 2, 4];
-const SEPT_MAT = [7];              /* темы физики на сентябрь */
+const SEPT_MAT = [7, 8];
+const SEPT_MAT2 = [14, 16, 15, 18, 19, 20];              /* темы физики на сентябрь */
 
 function dayNorm() {
   let done = 0, total = 0;

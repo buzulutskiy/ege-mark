@@ -2,7 +2,7 @@
 """Полная пересборка данных: кинематика → динамика → гидростатика → ядро → версия."""
 import subprocess, sys, os
 os.chdir(os.path.join(os.path.dirname(__file__), ".."))
-for step in ("kin1", "dyn1", "gidro", "mat7"):
+for step in ("kin1", "dyn1", "gidro", "mat7", "mat8", "mat2"):
     print("──", step)
     subprocess.run([sys.executable, "tools/%s.py" % step], check=True)
 sys.path.insert(0, "tools")
