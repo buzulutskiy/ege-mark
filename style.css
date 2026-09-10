@@ -992,3 +992,5 @@ body.in-lesson .tabs-wrap{display:none}
 .rz-err .rz-h{color:var(--bad)}
 .rz-p i.m-v{font-style:italic;font-family:"Times New Roman",Georgia,serif;font-size:1.08em;white-space:nowrap}
 .rz-p i.m-v sub{font-size:.72em;font-style:normal;vertical-align:-.25em;margin-left:1px}
+.rz-about{background:var(--card);border:1px solid var(--line)}
+.rz-about .rz-p{font-size:16px;font-weight:500}

@@ -218,6 +218,8 @@ function razProse(t) {
 
 function razborHTML(q, z) {
   return `<div class="rzbox">
+    ${q.simple ? `<div class="rz-block rz-about"><div class="rz-h">О чём задача, одной фразой</div>
+      <p class="rz-p">${esc(q.simple)}</p></div>` : ""}
     <div class="rz-block rz-dano">
       <div class="rz-h">Что дано и что найти</div>
       ${(z.dano || []).map(x => razLine(x)).join("")}
