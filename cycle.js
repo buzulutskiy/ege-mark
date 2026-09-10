@@ -93,7 +93,7 @@ function renderNum() {
   const sid = curSubj, sub = SUB[sid], n = curNum;
   const t = sub.byN[n], d = (MAP[sid] || {})[String(n)];
   let h = `<div class="ls-top">
-      <button class="ico" data-act="subject">‹</button>
+      <button class="ico" data-act="home">‹</button>
       <div class="ls-ti"><b>Задание ${n}. ${esc(t.name)}</b><span>${esc(sub.name)} · ${plural(t.p, "балл", "балла", "баллов")}</span></div>
     </div>
     <div class="offic"><span>что проверяют по кодификатору ФИПИ</span>${esc(t.full || t.name)}</div>`;
