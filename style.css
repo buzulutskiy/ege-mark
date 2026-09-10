@@ -947,3 +947,13 @@ body.in-lesson .tabs-wrap{display:none}
 .solve-all .eq{padding:0 .45em}
 .solve-n{margin-top:12px;font-size:13px;color:var(--mute);line-height:1.5}
 .swas{margin:8px 0 4px;font-size:15px;line-height:1.5;color:var(--dim)}
+.solve-btn{margin-top:0}
+.solvebox .sv-h{font-size:16px;font-weight:700;color:var(--ink);margin:18px 0 6px}
+.solvebox .sv-h:first-child{margin-top:0}
+.sv-f{margin:10px 0;padding:12px 14px;background:var(--card2);border-radius:10px;text-align:center}
+.sv-f .m{font-size:19px}
+.sv-plan{background:var(--card2);border-radius:12px;padding:14px 16px;margin-bottom:6px}
+.sv-plan-t{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);
+  font-weight:700;margin-bottom:8px}
+.sv-plan ol{margin:0;padding-left:20px}
+.sv-plan li{margin:0 0 7px;font-size:16px;line-height:1.5;color:var(--ink);font-weight:500}

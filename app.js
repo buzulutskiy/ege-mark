@@ -1546,6 +1546,10 @@ document.addEventListener("click", e => {
     return;
   }
   if (a === "simpler") { aiExplain(t.dataset.id); return; }
+  if (a === "aisolve") { aiSolve(t.dataset.id); return; }
+  if (a === "aiagain2") { delete AIS["s" + t.dataset.id];
+    try { localStorage.removeItem("ai2:s" + t.dataset.id); } catch (e) {}
+    aiSolve(t.dataset.id); return; }
   if (a === "aikey")  { aiSetupSheet(""); return; }
   if (a === "aisave") { aiSave(t.dataset.id); return; }
   if (a === "aiforget") { aiForget(); return; }

@@ -306,6 +306,7 @@ function taskHTML(q, sub, idx, total) {
     ${parts.figs.length ? `<div class="qfig">${parts.figs.join("")}</div>` : ""}
     <div class="qtask">${hlQ(parts.text)}</div>
     ${aiBlockHTML(q)}
+    ${aiSolveHTML(q)}
   </div>`;
   let h = `<div class="ls-body qbody split" style="--c:${sub.color}">${ask}<div class="qsol-col">`;
 

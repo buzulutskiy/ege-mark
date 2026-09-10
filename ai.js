@@ -43,6 +43,113 @@ ${f.f ? `Решается формулой: ${f.f}` : ""}
 Числа не подставляй, ответ не называй.`;
 }
 
+/* Полное пошаговое решение: формулы просим в нашей записи, чтобы отрисовать дробями */
+const MATHFMT = `Формулы пиши ТОЛЬКО в такой записи, каждую на отдельной строке и с новой строки:
+дробь — (4)/(7), степень — x^2 или 2^(4 − 2x), корень — √(x − 4) или ∛(x − 4),
+индекс — v_1, умножение — точка ·, логарифм — log_5(x + 4).
+Никакого LaTeX, никаких \\frac и долларов. Смешанное число пиши как 7 + (3)/(7).`;
+
+function aiSolvePrompt(q) {
+  return `Задание ЕГЭ:
+«${(q.plain || "").replace(/\s+/g, " ").trim()}»
+
+Реши его и покажи максимально подробное пошаговое решение для новичка, который в теме почти ноль.
+
+${MATHFMT}
+
+Формат ответа — строго такой, без markdown и звёздочек:
+
+ПЛАН
+Три-четыре строки, каждая с новой строки: весь ход решения одним взглядом, по порядку.
+Пиши как маршрут: «сначала избавляемся от дроби», «потом остаётся линейное уравнение», «в конце проверяем».
+Это самое важное в ответе: по плану должно быть понятно, почему шаги идут именно в таком порядке.
+
+ШАГ: короткий заголовок шага
+Сначала одно предложение — почему сейчас делаем именно это: что мешало решать дальше и что станет проще.
+Потом одно-два предложения — что конкретно делаем.
+Потом формула этого шага на отдельной строке.
+
+ШАГ: следующий заголовок
+И так далее. Каждый шаг — новый блок, начинающийся со слова ШАГ.
+Не пропускай мелочи: перевод смешанного числа в дробь, сокращение, деление — всё показывай отдельными шагами.
+
+ПРОВЕРКА
+Подставь найденный ответ обратно в исходное задание и покажи формулами, что равенство сходится.
+
+ОТВЕТ
+Одна строка: чему равен ответ.`;
+}
+
+async function aiSolve(id) {
+  const q = qById(id);
+  if (!q) return;
+  if (!aiKey()) return aiSetupSheet(id);
+  AIS["s" + id] = { load: 1 };
+  render();
+  try {
+    const r = await fetch(AI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + aiKey() },
+      body: JSON.stringify({ model: aiModel(), max_tokens: 4000,
+                             messages: [{ role: "user", content: aiSolvePrompt(q) }] }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error((j.error && (j.error.message || j.error)) || "код " + r.status);
+    const out = (((j.choices || [])[0] || {}).message || {}).content || "";
+    if (!out.trim()) throw new Error("модель вернула пустой ответ");
+    AIS["s" + id] = { text: out, model: aiModel() };
+    try { localStorage.setItem("ai2:s" + id, JSON.stringify(AIS["s" + id])); } catch (e) {}
+  } catch (e) {
+    AIS["s" + id] = { err: String(e.message || e) };
+  }
+  render();
+}
+
+/* строка похожа на формулу, а не на прозу */
+function isMathLine(t) {
+  const s = t.trim();
+  if (!s || s.length > 90) return false;
+  const cyr = (s.match(/[а-яё]{4,}/gi) || []).length;
+  return cyr <= 1 && /[=+\-−·^/√]/.test(s) && /\d|x|y|[a-z]/i.test(s);
+}
+
+function aiSolveHTML(q) {
+  const st = aiCached("s" + q.id);
+  if (!st) {
+    return `<button class="simpler solve-btn" data-act="aisolve" data-id="${q.id}">
+      Показать решение целиком<span>каждый шаг с формулами, до самого ответа</span></button>`;
+  }
+  if (st.load) {
+    return `<div class="aibox load"><div class="ai-bar"><i></i></div>
+      <div class="ai-wait">Расписываю решение по шагам…</div></div>`;
+  }
+  if (st.err) {
+    return `<div class="aibox err"><b>Не вышло решить</b><span>${esc(st.err)}</span>
+      <button class="lnk" data-act="aisolve" data-id="${q.id}">ещё раз</button></div>`;
+  }
+  const blocks = String(st.text).split(/\n(?=ШАГ:|ОТВЕТ\b|ПРОВЕРКА\b|ПЛАН\b)/);
+  const body = blocks.map(b => {
+    const head = b.match(/^(ШАГ:\s*(.+)|ОТВЕТ|ПРОВЕРКА|ПЛАН)/);
+    let title = "", rest = b;
+    if (head) {
+      title = head[2] ? head[2].trim() : head[1];
+      rest = b.slice(head[0].length);
+    }
+    const lines = rest.split(/\n+/).map(x => x.trim()).filter(Boolean);
+    if (title === "ПЛАН") {
+      return `<div class="sv-plan"><div class="sv-plan-t">как тут рассуждать</div>
+        <ol>${lines.map(x => `<li>${esc(x.replace(/^[-–—•\d.)\s]+/, ""))}</li>`).join("")}</ol></div>`;
+    }
+    return `${title ? `<div class="sv-h">${esc(title)}</div>` : ""}
+      ${lines.map(x => isMathLine(x)
+        ? `<div class="sv-f">${mathHTML(x)}</div>`
+        : `<p class="ai-p">${esc(x)}</p>`).join("")}`;
+  }).join("");
+  return `<div class="aibox solvebox">${body}
+    <div class="ai-foot">Решил ${esc(st.model || "")}.
+      <button class="lnk" data-act="aiagain2" data-id="${q.id}">решить заново</button></div></div>`;
+}
+
 async function aiExplain(id) {
   const q = qById(id);
   if (!q) return;
