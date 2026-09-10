@@ -16,7 +16,7 @@ const AIS = {};                       /* id → {load, err, retell, words} */
 function aiCached(id) {
   if (AIS[id]) return AIS[id];
   try {
-    const raw = localStorage.getItem("ai:" + id);
+    const raw = localStorage.getItem("ai2:" + id);
     if (raw) AIS[id] = JSON.parse(raw);
   } catch (e) {}
   return AIS[id];
@@ -24,28 +24,19 @@ function aiCached(id) {
 
 function aiPrompt(q) {
   const f = (q.formulas || [q.formula || {}])[0] || {};
-  const hint = f.f ? `\n\nПодсказка для тебя, ученику её дословно не показывай: задача решается формулой ${f.f}. ${f.why || ""}` : "";
-  return `Ты объясняешь школьнику, который только начал физику и половину слов в задании не понимает.
-
-Вот задание ЕГЭ дословно:
+  return `Задание ЕГЭ по физике:
 «${(q.plain || "").replace(/\s+/g, " ").trim()}»
 
-Картинку ты не видишь. Не выдумывай, что на ней нарисовано, и не описывай её — говори только то, что прямо следует из текста задания.
+Ученик — новичок, физику только начал. Картинку ты не видишь: не описывай её и не выдумывай, что на ней.
+${f.f ? `Задача решается формулой ${f.f} — шаги должны вести именно к ней.` : ""}
 
-Перепиши это задание простым языком. Ответь ровно в таком формате, без markdown и без звёздочек:
+Ответь ровно в двух блоках, без markdown и звёздочек.
 
-ПЕРЕСКАЗ
-Связный текст на четыре-шесть предложений. Перескажи задание так, как объяснил бы младшему брату. Каждое непонятное слово раскрывай прямо по ходу, в том же предложении, а не отдельным списком: вместо «найди проекцию скорости» пиши «найди скорость со знаком — плюс, если тело едет в одну сторону, минус, если в обратную». Так же разбери обозначения: если в задании написано v с маленькой x, скажи, что это значит. Закончи тем, что именно нужно найти и в каких единицах записать ответ. Не используй слова «проекция», «модуль», «равноускоренный» без немедленного объяснения тут же.
+ЧТО ХОТЯТ
+Два-три предложения. Своими словами и на бытовой аналогии объясни, что тут просят найти. Термины из условия раскрывай прямо в предложении, а не отдельно. Слова «проекция», «модуль», «равноускоренный» без немедленного объяснения не используй.
 
-ЛОГИКА
-За что хвататься. По пунктам, каждый с новой строки:
-— по какому признаку в тексте видно, что делать именно так;
-— какая формула тут работает и почему подходит именно она;
-— в каком порядке действовать: что найти первым, что вторым;
-— где в такой задаче обычно ошибаются.
-Пиши так, будто человек видит подобную задачу впервые.
-
-Не решай задачу, не подставляй числа и не называй ответ.${hint}`;
+ШАГИ
+Три-пять пунктов, каждый с новой строки. Сухо и по делу: что сделать первым, что вторым. Без вступлений, без «давайте разберёмся», без объяснений зачем. Последний пункт — подставить числа в формулу. Числа не подставляй и ответ не называй.`;
 }
 
 async function aiExplain(id) {
@@ -61,18 +52,18 @@ async function aiExplain(id) {
     const r = await fetch(AI_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + aiKey() },
-      body: JSON.stringify({ model: aiModel(), max_tokens: 4000, messages: [{ role: "user", content: content }] }),
+      body: JSON.stringify({ model: aiModel(), max_tokens: 2000, messages: [{ role: "user", content: content }] }),
     });
     const j = await r.json();
     if (!r.ok) throw new Error((j.error && (j.error.message || j.error)) || "код " + r.status);
     const out = (((j.choices || [])[0] || {}).message || {}).content || "";
     if (!out.trim()) throw new Error("модель вернула пустой ответ");
 
-    const m = out.split(/\n\s*ЛОГИКА\s*\n/i);
-    const retell = (m[0] || "").replace(/^\s*ПЕРЕСКАЗ\s*\n?/i, "").trim();
+    const m = out.split(/\n\s*ШАГИ\s*\n/i);
+    const retell = (m[0] || "").replace(/^\s*ЧТО\s+ХОТЯТ\s*\n?/i, "").trim();
     const logic = (m[1] || "").trim();
     AIS[id] = { retell: retell, logic: logic, model: aiModel() };
-    try { localStorage.setItem("ai:" + id, JSON.stringify(AIS[id])); } catch (e) {}
+    try { localStorage.setItem("ai2:" + id, JSON.stringify(AIS[id])); } catch (e) {}
   } catch (e) {
     AIS[id] = { err: String(e.message || e) };
   }
@@ -96,9 +87,9 @@ function aiBlockHTML(q) {
       <button class="lnk" data-act="aikey">проверить ключ</button></div>`;
   }
   return `<div class="aibox">
-    <div class="ai-h">задача обычными словами</div>
+    <div class="ai-h">что от тебя хотят</div>
     ${(st.retell || "").split(/\n+/).map(x => `<p class="ai-p">${esc(x)}</p>`).join("")}
-    ${st.logic ? `<div class="ai-h">за что хвататься</div>
+    ${st.logic ? `<div class="ai-h">порядок действий</div>
       <ul class="ai-l">${st.logic.split(/\n+/).map(x =>
         `<li>${esc(x.replace(/^[-–—•*\d.)\s]+/, ""))}</li>`).join("")}</ul>` : ""}
     <div class="ai-foot">Пересказал ${esc(st.model || "")}, картинку он не смотрел.
@@ -139,6 +130,6 @@ function aiForget() {
 
 function aiAgain(id) {
   delete AIS[id];
-  try { localStorage.removeItem("ai:" + id); } catch (e) {}
+  try { localStorage.removeItem("ai2:" + id); } catch (e) {}
   aiExplain(id);
 }

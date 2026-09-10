@@ -371,7 +371,6 @@ function taskHTML(q, sub, idx, total) {
   h += `</div>`;
   if (open >= seq.length)
     h += `<div class="gwrap"><b>Задача решена</b>Ответ ${esc(q.answer)}. Дальше такие будешь решать сам.</div>`;
-  h += `<button class="qorig" data-act="qfree" data-id="${q.id}">Не надо шагов — решу сам</button>`;
   return h + `</div></div>`;
 }
 
