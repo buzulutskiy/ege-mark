@@ -186,6 +186,62 @@ async function loadForm(sid) {
   return FMAP[sid];
 }
 
+/* ─── встроенный разбор: написан руками для каждой задачи ─── */
+let RAZ = {}, razLoad = {};
+async function loadRaz(sid, n) {
+  const key = sid + "-" + n;
+  if (RAZ[key] || razLoad[key]) return;
+  razLoad[key] = 1;
+  try {
+    const r = await fetch("lessons/razbor-" + key + ".json?v=" + VER);
+    RAZ[key] = r.ok ? await r.json() : {};
+  } catch (e) { RAZ[key] = {}; }
+  render();
+}
+function razOf(id) {
+  for (const k in RAZ) if (RAZ[k][id]) return RAZ[k][id];
+  return null;
+}
+
+/* строка разбора: «f: …» — формула, всё остальное — обычный текст */
+function razLine(x) {
+  const t = String(x || "").trim();
+  if (/^f\s*:/.test(t)) return `<div class="rz-f">${mathHTML(t.replace(/^f\s*:/, "").trim())}</div>`;
+  return `<p class="rz-p">${razProse(t)}</p>`;
+}
+
+/* в обычном тексте v_x, x_0, Δx_1, v_ср — это переменные с индексом: показываем их как в формуле */
+function razProse(t) {
+  return esc(t).replace(/(^|[^a-zA-Zа-яё0-9])([a-zA-Z]|Δ[a-zA-Z])_([0-9a-zA-Zа-яё]{1,8})(?![a-zA-Zа-яё0-9])/g,
+    (m, pre, v, sub) => `${pre}<i class="m-v">${v}<sub>${sub}</sub></i>`);
+}
+
+function razborHTML(q, z) {
+  return `<div class="rzbox">
+    <div class="rz-block rz-dano">
+      <div class="rz-h">Что дано и что найти</div>
+      ${(z.dano || []).map(x => razLine(x)).join("")}
+    </div>
+    <div class="rz-block rz-plan">
+      <div class="rz-h">Как будем решать</div>
+      <ol>${(z.plan || []).map(x => `<li>${esc(x)}</li>`).join("")}</ol>
+    </div>
+    <div class="rz-steps">
+      ${(z.steps || []).map((st, i) => `<div class="rz-step">
+        <div class="rz-n">${i + 1}</div>
+        <div class="rz-b">
+          <div class="rz-t">${esc(st.t || "")}</div>
+          ${(st.p || []).map(x => razLine(x)).join("")}
+        </div>
+      </div>`).join("")}
+    </div>
+    <div class="rz-block rz-ans"><div class="rz-h">Ответ</div>
+      <p class="rz-p">${esc(z.ans || q.answer || "")}</p></div>
+    <div class="rz-block rz-err"><div class="rz-h">Где обычно спотыкаются</div>
+      <p class="rz-p">${esc(z.err || "")}</p></div>
+  </div>`;
+}
+
 function qById(id) {
   const q = (BANK[curSubj] || []).find(x => x.id === id);
   return q ? Object.assign({}, q, (QX[curSubj] || {})[id] || {}) : null;
@@ -301,14 +357,28 @@ function taskHTML(q, sub, idx, total) {
   const list = q.formulas || (q.formula ? [q.formula] : []);
   const sb = q.formula && q.formula.subst;
 
+  const z = razOf(q.id);
   const ask = `<div class="qask-col">
     <div class="qnum">Задача ${idx + 1} из ${total}</div>
     ${parts.figs.length ? `<div class="qfig">${parts.figs.join("")}</div>` : ""}
     <div class="qtask">${hlQ(parts.text)}</div>
     ${aiBlockHTML(q)}
-    ${aiSolveHTML(q)}
+    ${z ? "" : aiSolveHTML(q)}
   </div>`;
   let h = `<div class="ls-body qbody split" style="--c:${sub.color}">${ask}<div class="qsol-col">`;
+
+  /* написанный руками разбор: показываем сразу, поле ответа — над ним */
+  if (z) {
+    if (done)
+      h += `<div class="dr-r ${res.ok ? "ok" : "no"}"><b>${res.ok ? "Верно" : "Правильный ответ: " + esc(q.answer)}</b></div>`;
+    else
+      h += `<div class="dr-in">
+        <input type="text" id="qa" placeholder="ответ" autocomplete="off">
+        <button class="dr-go go" data-act="qcheck" data-id="${q.id}">Проверить ответ</button>
+      </div>`;
+    h += `<h4 class="sec">Разбор по шагам</h4>` + razborHTML(q, z);
+    return h + `</div></div>`;
+  }
 
   if (done) {
     h += `<div class="dr-r ${res.ok ? "ok" : "no"}"><b>${res.ok ? "Верно" : "Правильный ответ: " + esc(q.answer)}</b></div>
@@ -414,6 +484,7 @@ function taskHTML(q, sub, idx, total) {
 function renderCycle() {
   const sid = curSubj, sub = SUB[sid], g = curCyc;
   if (!g) { view = "num"; return renderNum(); }
+  loadRaz(sid, curNum);
   const qs = cycTasks(g), s = cycStat(g);
   const onTheory = cycIdx < 0;
   const q = onTheory ? null : qs[Math.min(cycIdx, qs.length - 1)];

@@ -417,20 +417,23 @@ function renderHome() {
     return `<button class="numrow big" data-act="num" data-n="${n}" data-s="${sid}" style="--c:${sub.color}">
       <span class="nr-n">${n}</span>
       <span class="nr-b"><b>${esc(name)}</b>
-        <i>${d ? plural(d.groups.length, "приём", "приёма", "приёмов") + " · " + d.total + " задач"
+        <i>${d ? plural(d.groups.length, "приём", "приёма", "приёмов") + " · " + plural(d.total, "задача", "задачи", "задач")
               : "загружаем…"}</i>
         <span class="nr-bar"><em style="width:${st.total ? st.done / st.total * 100 : 0}%"></em></span></span>
       <span class="nr-p">${st.total ? st.done + "/" + st.total : "—"}</span>
     </button>`;
   };
-  return `<h4 class="sec first">Сентябрь · физика</h4>
-    ${SEPT_FIZ.map(n => row("fiz", n)).join("")}
-    <h4 class="sec">Сентябрь · математика, база</h4>
-    ${SEPT_MAT.map(n => row("mat", n)).join("")}
-    <h4 class="sec">Сентябрь · математика, часть 2</h4>
+  let h = `<h4 class="sec first">Сентябрь · физика</h4>
+    ${SEPT_FIZ.map(n => row("fiz", n)).join("")}`;
+  if (SEPT_MAT.length)
+    h += `<h4 class="sec">Сентябрь · математика, база</h4>
+    ${SEPT_MAT.map(n => row("mat", n)).join("")}`;
+  if (SEPT_MAT2.length)
+    h += `<h4 class="sec">Сентябрь · математика, часть 2</h4>
     <p class="foot" style="margin:0 0 10px">Здесь ответ — развёрнутое решение, а не число. Задачи
       разложены по приёмам, к каждой есть официальный разбор.</p>
     ${SEPT_MAT2.map(n => row("mat", n)).join("")}`;
+  return h;
 }
 
 
@@ -1393,9 +1396,14 @@ function solvedToday() {
   return n;
 }
 
-const SEPT_FIZ = [1, 2, 4];
-const SEPT_MAT = [7, 8];
-const SEPT_MAT2 = [14, 16, 15, 18, 19, 20];              /* темы физики на сентябрь */
+/* Что открыто сейчас. Кинематика первой получила встроенный разбор,
+   остальные темы прячем, пока к ним не дописан такой же. */
+const LIVE_FIZ = [1];
+const LIVE_MAT = [];
+const LIVE_MAT2 = [];
+const SEPT_FIZ = LIVE_FIZ;                               /* темы на сентябрь = открытые */
+const SEPT_MAT = LIVE_MAT;
+const SEPT_MAT2 = LIVE_MAT2;
 
 function dayNorm() {
   let done = 0, total = 0;
