@@ -413,9 +413,10 @@ function renderHome() {
   const row = n => {
     const t = sub.byN[n], st = numStat("fiz", n), d = m[String(n)];
     if (!t) return "";
+    const name = (d && d.name) || t.name;
     return `<button class="numrow big" data-act="num" data-n="${n}" style="--c:${sub.color}">
       <span class="nr-n">${n}</span>
-      <span class="nr-b"><b>${esc(t.name)}</b>
+      <span class="nr-b"><b>${esc(name)}</b>
         <i>${d ? plural(d.groups.length, "приём", "приёма", "приёмов") + " · " + d.total + " задач"
               : "загружаем…"}</i>
         <span class="nr-bar"><em style="width:${st.total ? st.done / st.total * 100 : 0}%"></em></span></span>
@@ -423,7 +424,7 @@ function renderHome() {
     </button>`;
   };
   return `<h4 class="sec first">Сентябрь · физика</h4>
-    ${row(1)}${row(2)}
+    ${SEPT_FIZ.map(row).join("")}
     <p class="foot">Гидростатика и профильная математика — на подходе.</p>`;
 }
 
@@ -1386,7 +1387,7 @@ function solvedToday() {
   return n;
 }
 
-const SEPT_FIZ = [1, 2];              /* темы физики на сентябрь */
+const SEPT_FIZ = [1, 2, 4];              /* темы физики на сентябрь */
 
 function dayNorm() {
   let done = 0, total = 0;
@@ -1418,11 +1419,14 @@ function renderTop() {
   if (dl2) {
     const w2 = (n, a, b, c) => { const x = Math.abs(n) % 100, y = x % 10;
       return x > 10 && x < 20 ? c : y === 1 ? a : y > 1 && y < 5 ? b : c; };
-    const names = SEPT_FIZ.map(n => (SUB.fiz.byN[n] || {}).name || "")
-      .map(x => x.split(":")[0].toLowerCase()).filter(Boolean).join(" и ");
+    const names = SEPT_FIZ.map(n => ((MAP.fiz || {})[String(n)] || {}).name
+        || (SUB.fiz.byN[n] || {}).name || "")
+      .map(x => x.split(":")[0].toLowerCase()).filter(Boolean);
+    const nm = names.length > 2 ? names.slice(0, -1).join(", ") + " и " + names[names.length - 1]
+             : names.join(" и ");
     dl2.innerHTML = k.rest
-      ? `<b>${esc(names)}</b><span>до ${fmtDate(k.deadline)} — ${k.left} ${w2(k.left, "день", "дня", "дней")}</span>`
-      : `<b>${esc(names)}</b><span>закрыты</span>`;
+      ? `<b>${esc(nm)}</b><span>до ${fmtDate(k.deadline)} — ${k.left} ${w2(k.left, "день", "дня", "дней")}</span>`
+      : `<b>${esc(nm)}</b><span>закрыты</span>`;
   }
   if (!k.rest) {
     row.innerHTML = `<div class="db-t"><b>всё решено</b></div>

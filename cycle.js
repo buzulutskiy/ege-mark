@@ -263,6 +263,37 @@ function termsHTML(list, id) {
   </div>`;
 }
 
+/* «Проверь себя»: как числа подставляются в формулу и считаются */
+function solveHTML(q) {
+  const steps = (q.steps || []).filter(x => x.a !== undefined && x.a !== "");
+  const sb = q.formula && q.formula.subst;
+  if (!steps.length && !sb) return "";
+  const line = x => {
+    const t = String(x.q || "").replace(/[?.!,;\s]+$/, "");
+    const i = Math.max(t.lastIndexOf(":"), t.lastIndexOf("—"));
+    let e = (i > 0 ? t.slice(i + 1) : t).replace(/[?.!,;\s]+$/, "").replace(/^\s*[-–—]\s*/, "").trim();
+    const words = (e.match(/[а-яё]{3,}/gi) || []).length;
+    const num = /[\d)]/.test(e) && e.length < 46 && words <= 2;
+    if (num) return { e: e, num: true, a: fmtA(x) };
+    let lab = t.split(/[:.]/)[0].trim();
+    if (lab.length > 52) lab = lab.slice(0, 50) + "…";
+    return { e: lab, num: false, a: fmtA(x) };
+  };
+  const fmtA = x => String(x.a).replace(/^-/, "\u2212") + (x.unit ? " " + x.unit : "");
+
+  return `<div class="solve">
+    <div class="solve-t">Как это считается</div>
+    ${q.formula ? `<div class="solve-f">${mathHTML(q.formula.f)}</div>` : ""}
+    <ol class="solve-l">${steps.map(x => {
+      const L = line(x);
+      return `<li>${L.num ? `<b>${mathHTML(L.e)}</b><span class="eq">=</span>` : `<i>${esc(L.e)}</i>`}
+        <b class="res">${esc(L.a)}</b></li>`;
+    }).join("")}</ol>
+    ${sb && steps.length > 1 ? `<div class="solve-all">${mathHTML(sb.in)}<span class="eq">=</span>${mathHTML(sb.out)}</div>` : ""}
+    <div class="solve-n">Сверь с тем, что посчитал в тетради. Если сошлось на каждой строке — приём усвоен.</div>
+  </div>`;
+}
+
 function taskHTML(q, sub, idx, total) {
   const res = solvedOf(q.id), done = res && (res.ok || res.shown);
   const steps = q.steps || [];
@@ -280,7 +311,7 @@ function taskHTML(q, sub, idx, total) {
 
   if (done) {
     h += `<div class="dr-r ${res.ok ? "ok" : "no"}"><b>${res.ok ? "Верно" : "Правильный ответ: " + esc(q.answer)}</b></div>
-      ${sb ? `<div class="fsub"><span>решение целиком</span><b>${mathHTML(sb.in)}<span class="m-o">=</span>${mathHTML(sb.out)}</b></div>` : ""}
+      ${solveHTML(q)}
       ${q.solution ? `<div class="sol"><b>Официальный разбор</b>${esc(fixSol(q.solution))}</div>` : ""}
       <button class="explain" data-act="qask" data-id="${q.id}">Не понял разбор — объясни своими словами</button>`;
     return h + `</div></div>`;

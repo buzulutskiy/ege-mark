@@ -927,3 +927,22 @@ body.in-lesson .tabs-wrap{display:none}
 .bk-t{margin-top:14px;padding:12px 14px;border-radius:11px;background:var(--badbg)}
 .bk-t span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;
   color:var(--bad);font-weight:700;margin-bottom:4px}
+
+/* ── проверь себя ───────────────────────── */
+.solve{margin:14px 0 0;padding:16px 18px;border-radius:var(--r);background:var(--card);
+  border:1px solid var(--line);box-shadow:var(--shadow)}
+.solve-t{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);
+  font-weight:700;margin-bottom:12px}
+.solve-f{text-align:center;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:14px}
+.solve-f .m{font-size:20px;font-weight:600}
+.solve-l{margin:0;padding-left:22px}
+.solve-l li{margin:0 0 10px;font-size:16px;line-height:1.6;color:var(--ink)}
+.solve-l li .m{font-size:17px}
+.solve-l li i{font-style:normal;color:var(--dim);font-size:15px}
+.solve-l .eq{padding:0 .4em;color:var(--mute)}
+.solve-l .res{font-weight:700;font-variant-numeric:tabular-nums}
+.solve-all{margin-top:14px;padding:13px 15px;border-radius:10px;background:var(--okbg);
+  text-align:center;color:var(--ok)}
+.solve-all .m{font-size:18px;font-weight:700}
+.solve-all .eq{padding:0 .45em}
+.solve-n{margin-top:12px;font-size:13px;color:var(--mute);line-height:1.5}
