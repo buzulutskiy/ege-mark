@@ -26,9 +26,22 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
 
 
 def get(url, binary=False):
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Encoding": "gzip"})
     with urllib.request.urlopen(req, timeout=45) as r:
         raw = r.read()
+        enc = (r.headers.get("Content-Encoding") or "").lower()
+    if enc == "gzip" or raw[:2] == b"\x1f\x8b":      # иначе картинки сохраняются сжатыми
+        import gzip, io
+        try:
+            raw = gzip.decompress(raw)
+        except Exception:
+            pass
+    elif enc == "deflate":
+        import zlib
+        try:
+            raw = zlib.decompress(raw)
+        except Exception:
+            pass
     return raw if binary else raw.decode("utf-8", "replace")
 
 
