@@ -1418,9 +1418,11 @@ function renderTop() {
   if (dl2) {
     const w2 = (n, a, b, c) => { const x = Math.abs(n) % 100, y = x % 10;
       return x > 10 && x < 20 ? c : y === 1 ? a : y > 1 && y < 5 ? b : c; };
+    const names = SEPT_FIZ.map(n => (SUB.fiz.byN[n] || {}).name || "")
+      .map(x => x.split(":")[0].toLowerCase()).filter(Boolean).join(" и ");
     dl2.innerHTML = k.rest
-      ? `<b>кинематика</b><span>до ${fmtDate(k.deadline)} — ${k.left} ${w2(k.left, "день", "дня", "дней")}</span>`
-      : `<b>кинематика</b><span>закрыта</span>`;
+      ? `<b>${esc(names)}</b><span>до ${fmtDate(k.deadline)} — ${k.left} ${w2(k.left, "день", "дня", "дней")}</span>`
+      : `<b>${esc(names)}</b><span>закрыты</span>`;
   }
   if (!k.rest) {
     row.innerHTML = `<div class="db-t"><b>всё решено</b></div>
