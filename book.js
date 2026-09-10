@@ -6,7 +6,7 @@ let BOOK = {};
 async function loadBook(key) {
   if (BOOK[key] !== undefined) return BOOK[key];
   try {
-    const r = await fetch("lessons/book-" + key + ".json");
+    const r = await fetch("lessons/book-" + key + ".json?v=" + VER);
     BOOK[key] = r.ok ? await r.json() : null;
   } catch (e) { BOOK[key] = null; }
   return BOOK[key];

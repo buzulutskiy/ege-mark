@@ -51,7 +51,7 @@ let BANK = {};
 async function loadBank(sid) {
   if (BANK[sid] !== undefined) return BANK[sid];
   try {
-    const r = await fetch("bank/bank-" + sid + ".json");
+    const r = await fetch("bank/bank-" + sid + ".json?v=" + VER);
     BANK[sid] = r.ok ? (await r.json()).tasks : [];
   } catch (e) { BANK[sid] = []; }
   return BANK[sid];

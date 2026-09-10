@@ -1,4 +1,4 @@
-const CACHE = "ege-mark-v4";
+const CACHE = "ege-mark-20260910-210356";
 const FILES = ["./", "index.html", "style.css", "app.js", "lesson.js", "cycle.js", "math.js", "ai.js", "book.js", "data.js", "icon.svg", "manifest.webmanifest"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
@@ -14,6 +14,7 @@ self.addEventListener("fetch", e => {
       const cp = r.clone();
       caches.open(CACHE).then(c => c.put(e.request, cp)).catch(() => {});
       return r;
-    }).catch(() => caches.match(e.request).then(r => r || caches.match("index.html")))
+    }).catch(() => caches.match(e.request).then(
+      r => r || (e.request.mode === "navigate" ? caches.match("index.html") : Response.error())))
   );
 });

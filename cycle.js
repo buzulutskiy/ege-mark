@@ -11,7 +11,7 @@ let QX = {};               /* id задачи → разбор: simple, terms, s
 async function loadMap(sid) {
   if (MAP[sid]) return MAP[sid];
   try {
-    const r = await fetch("lessons/plan-" + sid + ".json");
+    const r = await fetch("lessons/plan-" + sid + ".json?v=" + VER);
     MAP[sid] = r.ok ? await r.json() : {};
   } catch (e) { MAP[sid] = {}; }
   return MAP[sid];
@@ -170,7 +170,7 @@ const qMode = {};
 async function loadQX(sid) {
   if (QX[sid]) return QX[sid];
   try {
-    const r = await fetch("lessons/q-" + sid + ".json");
+    const r = await fetch("lessons/q-" + sid + ".json?v=" + VER);
     QX[sid] = r.ok ? await r.json() : {};
   } catch (e) { QX[sid] = {}; }
   return QX[sid];
@@ -180,7 +180,7 @@ let FMAP = {}, numMode = "frm";
 async function loadForm(sid) {
   if (FMAP[sid]) return FMAP[sid];
   try {
-    const r = await fetch("lessons/form-" + sid + ".json");
+    const r = await fetch("lessons/form-" + sid + ".json?v=" + VER);
     FMAP[sid] = r.ok ? await r.json() : {};
   } catch (e) { FMAP[sid] = {}; }
   return FMAP[sid];
