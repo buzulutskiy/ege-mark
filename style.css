@@ -883,3 +883,6 @@ body.in-lesson main{padding-bottom:110px}
   .t-r{display:none}
   .dayrow{margin:0 0 0 auto}
 }
+.ai-l{margin:0;padding-left:20px}
+.ai-l li{margin:0 0 7px;font-size:15.5px;line-height:1.5;color:var(--ink)}
+.ai-l li::marker{color:var(--mute)}

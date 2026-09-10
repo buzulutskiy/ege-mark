@@ -47,6 +47,8 @@ function taskPic(q) {
 }
 
 function aiPrompt(q, pic) {
+  const f = (q.formulas || [q.formula || {}])[0] || {};
+  const hint = f.f ? `\nПодсказка для тебя (ученику её не показывай дословно): эта задача решается формулой ${f.f}. ${f.why || ""}` : "";
   return `Ты объясняешь школьнику, который только начал физику и половину слов в задании не понимает.
 
 Вот задание ЕГЭ дословно:
@@ -56,7 +58,7 @@ ${pic ? "\nК заданию приложена картинка — посмо�
 Перескажи задание доступным языком. Ответь ровно в таком формате, без markdown и без звёздочек:
 
 ПЕРЕСКАЗ
-Три-четыре коротких предложения обычными словами: что происходит в задаче, что дано${pic ? " и что именно нарисовано на картинке — что отложено по каждой оси, какие числа подписаны, как ведёт себя линия" : ""}. Как будто пересказываешь другу, без физических терминов.
+Два-три коротких предложения обычными словами: что происходит в задаче${pic ? " и что нарисовано на картинке — что по осям и как ведёт себя линия" : ""}. Коротко, как другу. Без физических терминов и без перечисления всех чисел со шкалы.
 
 СЛОВА
 Построчно, каждый термин из условия с новой строки в виде «термин — объяснение». Разбери всё, что новичок может не понять: проекция, координата, ускорение, модуль, обозначения вроде v_x, a_x и маленькие индексы. В каждой строке скажи и что это значит, и почему в задании написано именно так.
@@ -64,7 +66,15 @@ ${pic ? "\nК заданию приложена картинка — посмо�
 ЧТО ХОТЯТ
 Одно-два предложения бытовым языком: что именно требуется найти и в каких единицах записать ответ.
 
-Не решай задачу и не называй числовой ответ.`;
+ЛОГИКА
+Самое главное. Объясни новичку, за что тут хвататься и почему. По пунктам, каждый пункт с новой строки:
+— по какому признаку в условии понятно, что делать именно так (что дано, что спрашивают);
+— какая формула тут работает и почему подходит именно она;
+— в каком порядке действовать: что найти первым, что вторым;
+— где в такой задаче обычно ошибаются.
+Пиши так, будто человек видит подобную задачу впервые и не понимает, с какой стороны подойти.
+
+Не решай задачу, не подставляй числа и не называй ответ — только логика.${hint}`;
 }
 
 async function aiExplain(id) {
@@ -84,7 +94,7 @@ async function aiExplain(id) {
     const r = await fetch(AI_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + aiKey() },
-      body: JSON.stringify({ model: aiModel(), max_tokens: 3000, messages: [{ role: "user", content: content }] }),
+      body: JSON.stringify({ model: aiModel(), max_tokens: 4000, messages: [{ role: "user", content: content }] }),
     });
     const j = await r.json();
     if (!r.ok) throw new Error((j.error && (j.error.message || j.error)) || "код " + r.status);
@@ -93,13 +103,15 @@ async function aiExplain(id) {
 
     const m = out.split(/\n\s*СЛОВА\s*\n/i);
     const rest = (m[1] || "").split(/\n\s*ЧТО\s+ХОТЯТ\s*\n/i);
+    const tail2 = (rest[1] || "").split(/\n\s*ЛОГИКА\s*\n/i);
     const retell = (m[0] || "").replace(/^\s*ПЕРЕСКАЗ\s*\n?/i, "").trim();
-    const want = (rest[1] || "").trim();
+    const want = (tail2[0] || "").trim();
+    const logic = (tail2[1] || "").trim();
     const words = (rest[0] || "").split("\n").map(x => x.trim()).filter(Boolean)
       .map(x => x.replace(/^[-–—•\d.)\s]+/, ""))
       .map(x => { const i = x.search(/\s[—–-]\s/); return i > 0 ? [x.slice(0, i), x.slice(i + 3)] : null; })
       .filter(Boolean);
-    AIS[id] = { retell: retell, words: words, want: want, pic: !!pic, model: aiModel() };
+    AIS[id] = { retell: retell, words: words, want: want, logic: logic, pic: !!pic, model: aiModel() };
     try { localStorage.setItem("ai:" + id, JSON.stringify(AIS[id])); } catch (e) {}
   } catch (e) {
     AIS[id] = { err: String(e.message || e) };
@@ -130,6 +142,9 @@ function aiBlockHTML(q) {
       <dl class="ai-w">${st.words.map(w => `<dt>${esc(w[0])}</dt><dd>${esc(w[1])}</dd>`).join("")}</dl>` : ""}
     ${st.want ? `<div class="ai-h">что от тебя хотят</div>
       ${st.want.split(/\n+/).map(x => `<p class="ai-p">${esc(x)}</p>`).join("")}` : ""}
+    ${st.logic ? `<div class="ai-h">за что хвататься</div>
+      <ul class="ai-l">${st.logic.split(/\n+/).map(x =>
+        `<li>${esc(x.replace(/^[-–—•*\d.)\s]+/, ""))}</li>`).join("")}</ul>` : ""}
     <div class="ai-foot">Пересказал ${esc(st.model || "")}${st.pic ? ", картинку он видел" : ""}.
       <button class="lnk" data-act="aidrop2" data-id="${q.id}">объяснить заново</button></div>
   </div>`;
