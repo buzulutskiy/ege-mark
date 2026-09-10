@@ -152,9 +152,9 @@ def parse(sid, page, theme, imgdir, task=0):
         sol = re.search(r'class="solution"[^>]*>(.*)', tail, re.S)
         soltxt = txt(sol.group(1)) if sol else ""
         soltxt = re.sub(r"^\s*Решение\s*\.?\s*", "", soltxt)
+        ans = re.search(r"Ответ:?\s*([^.;]{1,80})", soltxt)   # читаем ДО обрезки хвоста
         soltxt = cut_tail(soltxt)
-        ans = re.search(r"Ответ:?\s*([^.;]{1,80})", soltxt)
-        answer = ans.group(1).strip().rstrip(".") if ans else ""
+        answer = ans.group(1).strip(" :.—–-") if ans else ""
         if not answer:
             continue                                    # без ответа задание нам не нужно
         frag = clean(body)

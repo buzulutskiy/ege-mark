@@ -409,17 +409,22 @@ function subjChip(sid, extra) {
 let showPlan = false;
 
 function renderHome() {
-  const sub = SUB.fiz, t = sub.byN[1], st = numStat("fiz", 1);
-  const d = (MAP.fiz || {})["1"];
-  return `<h4 class="sec first">Физика</h4>
-    <button class="numrow big" data-act="num" data-n="1" style="--c:${sub.color}">
-      <span class="nr-n">1</span>
+  const sub = SUB.fiz, m = MAP.fiz || {};
+  const row = n => {
+    const t = sub.byN[n], st = numStat("fiz", n), d = m[String(n)];
+    if (!t) return "";
+    return `<button class="numrow big" data-act="num" data-n="${n}" style="--c:${sub.color}">
+      <span class="nr-n">${n}</span>
       <span class="nr-b"><b>${esc(t.name)}</b>
-        <i>${d ? plural(d.groups.length, "приём", "приёма", "приёмов") + " · " + d.total + " задач" : "загружаем…"}</i>
+        <i>${d ? plural(d.groups.length, "приём", "приёма", "приёмов") + " · " + d.total + " задач"
+              : "загружаем…"}</i>
         <span class="nr-bar"><em style="width:${st.total ? st.done / st.total * 100 : 0}%"></em></span></span>
       <span class="nr-p">${st.total ? st.done + "/" + st.total : "—"}</span>
-    </button>
-    <p class="foot">Остальные задания появятся, когда кинематика будет разобрана до конца.</p>`;
+    </button>`;
+  };
+  return `<h4 class="sec first">Сентябрь · физика</h4>
+    ${row(1)}${row(2)}
+    <p class="foot">Гидростатика и профильная математика — на подходе.</p>`;
 }
 
 function renderWeek(inner) {
