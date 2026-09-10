@@ -1386,9 +1386,13 @@ function solvedToday() {
   return n;
 }
 
+const SEPT_FIZ = [1, 2];              /* темы физики на сентябрь */
+
 function dayNorm() {
-  const p = topicProgress("fiz", 1);
-  if (!p || !p.total) return null;
+  let done = 0, total = 0;
+  SEPT_FIZ.forEach(n => { const x = topicProgress("fiz", n); if (x) { done += x.done; total += x.total; } });
+  const p = { done: done, total: total };
+  if (!p.total) return null;
   const deadline = endOfMonth(today());
   const left = Math.max(1, diffDays(today(), deadline) + 1);
   const rest = Math.max(0, p.total - p.done);
