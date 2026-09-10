@@ -564,7 +564,7 @@ def build():
                              "note": "Подставил числа — получил ответ.",
                              "rows": rows, "count": sum(r["count"] for r in rows)}],
                  "total": plan["4"]["total"]}
-    key_of = {i: g["key"] for g in gs for i in g["tasks"]}
+    key_of = {i: g["key"] for g in gs for i in g["tasks"] + g.get("more", [])}
     n = 0
     for id, v in Q.items():
         k = key_of.get(id)

@@ -364,8 +364,9 @@ function taskHTML(q, sub, idx, total) {
 
     if (it.t === "f") {
       h += `<div class="gstep${now ? " now" : " ok"}"><div class="gnum">${i + 1}</div><div class="gbody">
-        <div class="check-q">${told ? (list.length > 1 ? "Смотри: тут работают эти формулы" : "Смотри: тут работает эта формула")
-          : (list.length > 1 ? "Верно. Значит, работают эти формулы" : "Верно. Значит, работает эта формула")}</div>
+        <div class="check-q">${told ? "Смотри, что тут происходит"
+          : (list.length > 1 ? "Верно. Эти величины связывают две формулы" : "Верно. Эти величины связывает вот эта формула")}</div>
+        ${q.choice && q.choice.was ? `<div class="swas">${esc(q.choice.was)}</div>` : ""}
         ${list.map((x, k) => `<div class="ftitle">${list.length > 1 ? `${k + 1}. ` : ""}${esc(x.title || "")}</div>
           <div class="fmain">${mathHTML(x.f)}</div>
           ${x.what ? `<div class="fwhat">${esc(x.what)}</div>` : ""}`).join("")}

@@ -171,8 +171,9 @@ def slope_v(id, sub, diff, simple, who, x1, x2, t1, t2, dx, dt, ans, unit="м/с
         ask=("Смотри: на графике снизу время, а сбоку — где находится%s. "
              "А спрашивают скорость на куске с %s по %s. С чего начнёшь?" % (of2(id), t1, t2)),
         why=("Сбоку на графике — где тело было, а спрашивают скорость на куске с %s по %s. "
-             "Скорость это и есть «сколько метров за секунду»: смотрим, на сколько метров "
-             "сдвинулось тело за этот кусок, и делим на то, сколько секунд прошло." % (t1, t2)))
+             "За этот кусок координата сменилась с %s на %s м, то есть на %s м, и заняло это "
+             "%s секунд. Скорость и есть «метры за секунду», поэтому одно делят на другое." % (
+                 t1, t2, mns(x1), mns(x2), mns(dx), dt)))
 
 slope_v("sd970326","Скорость на одном участке",2,
  "Спортсмен бежит по дорожке, график показывает, где он был в каждый момент. Надо найти его скорость на куске с 4-й по 12-ю секунду: смотришь, сколько метров он пробежал, и делишь на время.",
@@ -470,10 +471,12 @@ def area(id, sub, diff, simple, parts, ans, tk=("gr_v","put","tri","trap","pr"))
         {"in": "s = " + " + ".join(expr(q, a) for _, q, a in parts), "out": mns(ans) + " м"},
         ask=("Смотри: сбоку на графике отмечена скорость%s, а спрашивают путь — "
              "сколько метров проехал. Что будешь делать?" % of(id)),
-        why=("Спрашивают путь, а дана скорость. Путь — это скорость на время, а если "
-             "перемножить то, что снизу, на то, что сбоку, получится как раз площадь. "
-             "Поэтому фигуру под линией делим на %s и складываем." %
-             ("одну простую часть" if len(parts) == 1 else plural_ru(len(parts)))))
+        why=("Спрашивают путь, а на графике скорость. Путь — это скорость на время, а произведение "
+             "того, что снизу, на то, что сбоку, и есть площадь под линией. Здесь фигура "
+             "распадается на %s: %s. Считаем каждую и складываем — выходит %s." % (
+                 ("одну простую часть" if len(parts) == 1 else plural_ru(len(parts))),
+                 "; ".join(p[0].rstrip(".").lower() for p in parts)[:170],
+                 mns(ans))))
 
 area("sd945808","За одну секунду",1,
  "«За вторую секунду» — это кусок между 1-й и 2-й секундой, а не первые две секунды. На нём скорость держится 2 м/с, под графиком получается простой прямоугольник.",
@@ -1391,7 +1394,10 @@ def build():
     plan["1"]["unsorted"] = 0
     json.dump(plan, open("lessons/plan-fiz.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
-    qx = {}
+    try:
+        qx = json.load(open("lessons/q-fiz.json", encoding="utf-8"))
+    except Exception:
+        qx = {}
     cyc_of = {id: c for id, c, _, _ in MAP}
     def personal(txt, g):
         if not txt or not g or g == "тела": return txt
@@ -1438,8 +1444,12 @@ def build():
         if rows:
             lvls.append({"level": n, "title": LVL[n][0], "note": LVL[n][1],
                          "rows": rows, "count": sum(r["count"] for r in rows)})
-    json.dump({"1": {"levels": lvls, "total": len(used)}},
-              open("lessons/form-fiz.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    try:
+        form = json.load(open("lessons/form-fiz.json", encoding="utf-8"))
+    except Exception:
+        form = {}
+    form["1"] = {"levels": lvls, "total": len(used)}
+    json.dump(form, open("lessons/form-fiz.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     for L in lvls:
         print("── %s (%d задач)" % (L["title"], L["count"]))
         for r in L["rows"]: print("   %3d  %s" % (r["count"], r["f"][:70]))
