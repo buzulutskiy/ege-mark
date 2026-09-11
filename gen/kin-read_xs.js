@@ -24,6 +24,13 @@ function verbP(body, stem) {
 function toNum(a) { return parseFloat(String(a).replace(/−/g, "-").replace(",", ".")); }
 
 
+/* границы вертикальной оси под реально нарисованную линию */
+function fitY(pts, yStep) {
+  const ys = pts.map(p => p[1]);
+  const lo = Math.min(...ys), hi = Math.max(...ys);
+  return { yFrom: lo >= 0 ? 0 : lo - yStep, yTo: hi + yStep };
+}
+
 const GEN = {
   key: "read_xs",
   title: "Путь и перемещение по графику координаты",
@@ -60,9 +67,10 @@ const GEN = {
         const x0 = ys[0], x1 = ys[ys.length - 1];
         const s = x1 - x0;
         const body = rnd.pick(BODIES);
+        const fit = fitY(pts, yStep);
         const graph = {
           x: { label: "t, с", from: 0, to: T, step: xStep, tick: xStep },
-          y: { label: "x, м", from: yFrom, to: yTo, step: yStep, tick: yStep },
+          y: { label: "x, м", from: fit.yFrom, to: fit.yTo, step: yStep, tick: yStep },
           lines: [{ pts }],
         };
         const dir = s > 0 ? "вправо" : "влево";

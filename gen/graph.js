@@ -41,7 +41,7 @@ const GRAPH = (function () {
     X.tick = X.tick || X.step; Y.tick = Y.tick || Y.step;
     const sx = cell / X.step, sy = cell / Y.step;
     const gw = (X.to - X.from) * sx, gh = (Y.to - Y.from) * sy;
-    const mL = 46, mR = 62, mT = 28, mB = 40;
+    const mL = 46, mR = 80, mT = 28, mB = 40;
     const W = mL + gw + mR, H = mT + gh + mB;
     const px = u => mL + (u - X.from) * sx;
     const py = u => mT + (Y.to - u) * sy;
