@@ -1,4 +1,4 @@
-const CACHE = "ege-mark-20260911-080648";
+const CACHE = "ege-mark-20260911-081028";
 const FILES = ["./", "index.html", "style.css", "app.js", "lesson.js", "cycle.js", "math.js", "ai.js", "book.js", "data.js", "icon.svg", "manifest.webmanifest"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
