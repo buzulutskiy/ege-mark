@@ -102,6 +102,13 @@ function renderNum() {
 
   const lv = ((FMAP[sid] || {})[String(n)] || {}).levels || [];
 
+  if (numMode !== "frm" && numMode !== "cyc" && typeof trainRowsHTML === "function") {
+    loadRaz(sid, n); loadGens(sid, n);
+    h += trainRowsHTML(sid, n);
+    h += `<button class="add" data-act="frm-all">Все ${d.total} задач, разложенные по формулам</button>`;
+    return h;
+  }
+
   if (numMode !== "cyc") {
     if (!lv.length) return h + `<p class="rest">Разбор по формулам для этого номера ещё не сделан.</p>`;
     lv.forEach((L, li) => {
@@ -119,7 +126,7 @@ function renderNum() {
       </button>`;
       });
     });
-    return h;
+    return h + `<button class="add" data-act="frm-all">Назад к приёмам</button>`;
   }
 
   h += `<h4 class="sec">Циклы задач</h4>`;
@@ -176,7 +183,7 @@ async function loadQX(sid) {
   return QX[sid];
 }
 
-let FMAP = {}, numMode = "frm";
+let FMAP = {}, numMode = "train";
 async function loadForm(sid) {
   if (FMAP[sid]) return FMAP[sid];
   try {
@@ -199,6 +206,7 @@ async function loadRaz(sid, n) {
   render();
 }
 function razOf(id) {
+  if (typeof TWIN_RAZ !== "undefined" && TWIN_RAZ[id]) return TWIN_RAZ[id];
   for (const k in RAZ) if (RAZ[k][id]) return RAZ[k][id];
   return null;
 }
@@ -302,7 +310,7 @@ function splitQ(html) {
   const box = document.createElement("div");
   box.innerHTML = html || "";
   const figs = [];
-  box.querySelectorAll("img:not(.tex), table").forEach(el => {
+  box.querySelectorAll("img:not(.tex), table, .gfig").forEach(el => {
     figs.push(el.outerHTML);
     el.remove();
   });

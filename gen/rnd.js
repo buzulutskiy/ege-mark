@@ -37,8 +37,10 @@ function fmtNum(x) {
   return String(v).replace(".", ",");
 }
 
-/* Число в ответ: как принято в ЕГЭ — запятая, минус обычный */
-function fmtAns(x) { return fmtNum(x); }
+/* Число в ответ: как принято в ЕГЭ — запятая и типографский минус.
+   Проверка ответа (sameAnswer) приводит любой вид минуса к одному, так что
+   ученик может печатать обычный дефис. */
+function fmtAns(x) { return fmtNum(x).replace("-", "−"); }
 
 /* Знак: число со знаком для формул: 5 → "5", −5 → "−5" (типографский минус) */
 function fmtSigned(x) { return fmtNum(x).replace("-", "−"); }

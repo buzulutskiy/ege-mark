@@ -1407,8 +1407,9 @@ const SEPT_MAT2 = LIVE_MAT2;
 
 function dayNorm() {
   let done = 0, total = 0;
-  SEPT_FIZ.forEach(n => { const x = topicProgress("fiz", n); if (x) { done += x.done; total += x.total; } });
-  SEPT_MAT.forEach(n => { const x = topicProgress("mat", n); if (x) { done += x.done; total += x.total; } });
+  const prog = (sid, n) => (typeof trainProgress === "function" && trainProgress(sid, n)) || topicProgress(sid, n);
+  SEPT_FIZ.forEach(n => { const x = prog("fiz", n); if (x) { done += x.done; total += x.total; } });
+  SEPT_MAT.forEach(n => { const x = prog("mat", n); if (x) { done += x.done; total += x.total; } });
   const p = { done: done, total: total };
   if (!p.total) return null;
   const deadline = endOfMonth(today());
@@ -1417,7 +1418,7 @@ function dayNorm() {
   return {
     total: p.total, done: p.done, rest: rest, left: left, deadline: deadline,
     need: rest ? Math.max(1, Math.ceil(rest / left)) : 0,
-    today: solvedToday(),
+    today: typeof trainToday === "function" ? trainToday() : solvedToday(),
   };
 }
 
@@ -1452,7 +1453,7 @@ function renderTop() {
   }
   const pct = k.need ? Math.min(100, Math.round(k.today / k.need * 100)) : 100;
   const full = k.today >= k.need;
-  row.title = `Осталось ${k.rest} задач из ${k.total}. До конца месяца ${k.left} дн. — по ${k.need} в день.`;
+  row.title = `Осталось ${k.rest} подвидов из ${k.total}. До конца месяца ${k.left} дн. — по ${k.need} в день.`;
   row.innerHTML = `<div class="db-t">${full ? "<b>на сегодня всё</b>"
       : `сегодня <b>${k.today} из ${k.need}</b>`}</div>
     <div class="db-bar${full ? " done" : ""}"><i style="width:${pct}%"></i></div>`;
@@ -1477,10 +1478,11 @@ function render() {
     : view === "num"     ? renderNum()
     : view === "subs"    ? renderSubs()
     : view === "cycle"   ? renderCycle()
+    : view === "train"   ? renderTrain()
     : view === "book"    ? renderBook()
     : view === "week"    ? renderHome()
     : view === "track"   ? renderTrack() : renderStats();
-  document.body.classList.toggle("in-lesson", view === "lesson" || view === "cycle");
+  document.body.classList.toggle("in-lesson", view === "lesson" || view === "cycle" || view === "train");
   document.body.classList.toggle("parent", isParent());
   renderTop();
   $$(".tab").forEach(b => b.classList.toggle("on", b.dataset.v === view));
@@ -1518,6 +1520,13 @@ document.addEventListener("click", e => {
     curNum = +(t.dataset.n || curNum); view = "num"; render(); window.scrollTo(0, 0); return;
   }
   if (a === "cycall") { enterCycle(curCyc); return; }
+  if (a === "train")    { trOpen(t.dataset.k); return; }
+  if (a === "tr-check") { trCheck(); return; }
+  if (a === "tr-ok")    { trNext(); return; }
+  if (a === "tr-again") { trAgain(); return; }
+  if (a === "tr-back")  { trBack(); return; }
+  if (a === "tr-peek")  { trPeek(); return; }
+  if (a === "frm-all")  { numMode = numMode === "frm" ? "train" : "frm"; render(); return; }
   if (a === "back-cyc") {
     const d = (MAP[curSubj] || {})[String(curNum)];
     const parent = (d.groups || []).find(g => (g.subs || []).length && curCyc &&
@@ -1631,9 +1640,9 @@ function init() {
   if (CFG.role === "mark") warmUp();
   recompute();
   render();
-  $("#gear").onclick = sheetSettings;
-  $("#syncBtn").onclick = () => (CFG.token && CFG.gist) ? syncNow(true) : sheetSettings();
-  if (!CFG.role) rolePicker();
+  if ($("#gear")) $("#gear").onclick = sheetSettings;
+  if ($("#syncBtn")) $("#syncBtn").onclick = () => (CFG.token && CFG.gist) ? syncNow(true) : sheetSettings();
+  if (!CFG.role) { CFG.role = "mark"; saveCfg(); }
   if (CFG.token && CFG.gist) syncNow(false);
   setTimeout(prepNext, 2500);
   if (fromLink) toast("Подключено как родитель");
