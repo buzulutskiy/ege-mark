@@ -117,7 +117,10 @@ GEN.kinds.forEach(kind => {
     }
     if (outDir && seed <= 2) (samples[kind.id] = samples[kind.id] || []).push({ seed, t });
   }
-  if (answers.size < Math.min(4, seeds)) bad(kind, 0, `ответы почти не меняются: ${[...answers].join(", ")}`);
+  /* У некоторых видов ответ по смыслу всегда один и тот же (например, «ускорение равно нулю»).
+     Такие виды помечают себя constAnswer: true — тогда меняться должны условия, а не ответ. */
+  if (!kind.constAnswer && answers.size < Math.min(4, seeds))
+    bad(kind, 0, `ответы почти не меняются: ${[...answers].join(", ")}`);
 });
 
 if (outDir) {
