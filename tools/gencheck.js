@@ -99,12 +99,19 @@ GEN.kinds.forEach(kind => {
     const g = t.dbg && t.dbg.graph;
     if (g && g.x && g.y) {
       const X = g.x, Y = g.y;
+      /* Плавная кривая (парабола) помечает себя curve: true — её точки лежат
+         между клетками по построению, у неё проверяем только границы.
+         Зато кружки-отметки (marks) обязаны попадать на узлы: по ним и снимают числа. */
       (g.lines || []).forEach((ln, li) => (ln.pts || []).forEach(p => {
         if (p[0] < X.from - 1e-9 || p[0] > X.to + 1e-9 || p[1] < Y.from - 1e-9 || p[1] > Y.to + 1e-9)
           bad(kind, seed, `линия ${li}: точка (${p[0]}, ${p[1]}) вне осей`);
-        if (!onGrid(p[0], X.from, X.step) || !onGrid(p[1], Y.from, Y.step))
+        if (!ln.curve && (!onGrid(p[0], X.from, X.step) || !onGrid(p[1], Y.from, Y.step)))
           bad(kind, seed, `линия ${li}: точка (${p[0]}, ${p[1]}) не на узле сетки (шаг ${X.step}×${Y.step})`);
       }));
+      (g.marks || []).forEach(p => {
+        if (!onGrid(p[0], X.from, X.step) || !onGrid(p[1], Y.from, Y.step))
+          bad(kind, seed, `отметка (${p[0]}, ${p[1]}) не на узле сетки (шаг ${X.step}×${Y.step})`);
+      });
       if (X.tick && !onGrid(X.tick, 0, X.step)) bad(kind, seed, "x.tick не кратен x.step");
       if (Y.tick && !onGrid(Y.tick, 0, Y.step)) bad(kind, seed, "y.tick не кратен y.step");
       if ((X.to - X.from) / X.step > 16 || (Y.to - Y.from) / Y.step > 14) bad(kind, seed, "слишком много клеток — график нечитаем");
