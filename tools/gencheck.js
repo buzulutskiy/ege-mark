@@ -109,6 +109,12 @@ GEN.kinds.forEach(kind => {
       if (Y.tick && !onGrid(Y.tick, 0, Y.step)) bad(kind, seed, "y.tick не кратен y.step");
       if ((X.to - X.from) / X.step > 16 || (Y.to - Y.from) / Y.step > 14) bad(kind, seed, "слишком много клеток — график нечитаем");
     }
+    /* независимый пересчёт: вид сам говорит, как проверить ответ по нарисованному графику */
+    if (typeof kind.check === "function") {
+      let msg = null;
+      try { msg = kind.check(t); } catch (e) { msg = "check() упал: " + e.message; }
+      if (msg) bad(kind, seed, msg);
+    }
     if (outDir && seed <= 2) (samples[kind.id] = samples[kind.id] || []).push({ seed, t });
   }
   if (answers.size < Math.min(4, seeds)) bad(kind, 0, `ответы почти не меняются: ${[...answers].join(", ")}`);
@@ -149,4 +155,6 @@ if (problems.length) {
   if (problems.length > 60) console.log(`  … и ещё ${problems.length - 60}`);
   process.exit(1);
 }
-console.log(`OK: ${GEN.key} — ${GEN.kinds.length} видов (${GEN.kinds.map(k => k.id).join(", ")}) × ${seeds} зёрен, всё сходится`);
+const withCheck = GEN.kinds.filter(k => typeof k.check === "function").length;
+console.log(`OK: ${GEN.key} — ${GEN.kinds.length} видов (${GEN.kinds.map(k => k.id).join(", ")}) × ${seeds} зёрен, всё сходится`
+  + (withCheck < GEN.kinds.length ? `  (без независимой проверки: ${GEN.kinds.filter(k => typeof k.check !== "function").map(k => k.id).join(", ")})` : "  (у всех видов есть независимая проверка)"));
