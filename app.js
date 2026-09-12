@@ -1526,6 +1526,7 @@ document.addEventListener("click", e => {
   if (a === "cs-open")  { crsOpen(t.dataset.k); return; }
   if (a === "cs-next")  { crsNext(); return; }
   if (a === "cs-check") { crsCheck(); return; }
+  if (a === "cs-real")  { crsReal(); return; }
   if (a === "cs-again") { crsAgain(); return; }
   if (a === "cs-back")  { crsBack(); return; }
   if (a === "cs-quiz")  { crsQuiz(+t.dataset.i, +t.dataset.o); return; }

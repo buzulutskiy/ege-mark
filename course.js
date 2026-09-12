@@ -5,8 +5,12 @@
    Шаги описаны в lessons/course-<sid>-<n>.json, типы:
      teach — кусок теории: заголовок, абзацы, формулы, рисунок из DRAW
      quiz  — быстрый вопрос на понимание, без вычислений
+     warm  — упрощённый пример: крошечные числа, решение целиком на виду.
+             Мост между теорией и настоящим заданием: тот же ход, но считать легко
      show  — настоящая задача ЕГЭ вместе с готовым разбором
-     solve — близнец из генератора: те же объекты, другие числа, разбора нет */
+     solve — близнец из генератора: те же объекты, другие числа, разбора нет
+     real  — настоящая задача ЕГЭ, которую Марк решает сам; разбор открывается после ответа
+     recap — итог приёма: что теперь умеешь и где тут ошибаются */
 
 let CRS = {}, crsKey = null, crsIdx = 0, quizPick = {};
 
@@ -29,6 +33,26 @@ function crsSteps() { const c = CRS[crsKey]; return c ? c.steps : []; }
 function illHTML(name) {
   if (!name || typeof DRAW === "undefined" || !DRAW[name]) return "";
   try { return `<div class="cs-ill">${DRAW[name]()}</div>`; } catch (e) { return ""; }
+}
+
+/* Эталонная запись решения — то, что Марк переписывает в тетрадь.
+   Собирается из разбора: только строки-формулы, по порядку, плюс ответ.
+   Получается ровно то, что учитель требует записать: цепочка формул с подставленными числами. */
+function notebookHTML(q, z) {
+  if (!z) return "";
+  const lines = [];
+  (z.steps || []).forEach(st => (st.p || []).forEach(x => {
+    if (/^f\s*:/.test(String(x))) lines.push(String(x).replace(/^f\s*:/, "").trim());
+  }));
+  if (!lines.length) return "";
+  return `<div class="nb">
+    <div class="nb-h"><b>Перепиши это в тетрадь</b><span>от руки, целиком — так решение запомнится рукой, а не глазами</span></div>
+    <div class="nb-p">
+      <div class="nb-t">Решение</div>
+      ${lines.map(x => `<div class="nb-f">${mathHTML(x)}</div>`).join("")}
+      <div class="nb-t nb-a">Ответ: ${esc(z.ans || q.answer || "")}</div>
+    </div>
+  </div>`;
 }
 
 /* близнец для шага solve — зерно от номера шага, чтобы задача была одна и та же при возврате */
@@ -102,11 +126,59 @@ function renderCourse() {
     const q = qById(step.id), z = q && razOf(q.id);
     if (!q) return h + `<p class="rest">Задача не загрузилась.</p>
       <div class="ls-nav"><button class="primary" data-act="cs-next">Пропустить</button></div>`;
-    h += `<div class="cs-stage show"><span>пример</span>смотри, как решается настоящая задача ЕГЭ</div>
+    h += `<div class="cs-stage show"><span>а теперь настоящая задача ЕГЭ</span>${esc(step.lead || "Теорию разобрали — вот как она работает на живом задании. Именно такое придёт на экзамене.")}</div>
+      <div class="cs-read">Сначала прочитай условие внимательно, не спеша. Потом читай разбор по шагам — там объяснено, какую формулу вспоминаем и почему именно её.</div>
       <div class="ls-body qbody split">${trTaskAsk(q)}<div class="qsol-col">
         <h4 class="sec">Разбор по шагам</h4>${z ? razborHTML(q, z) : `<p class="rest">Разбор загружается…</p>`}
+        ${z ? notebookHTML(q, z) : ""}
       </div></div>
-      <div class="ls-nav"><button class="primary" data-act="cs-next">Разобрал — дальше</button></div>`;
+      <div class="ls-nav"><button class="primary" data-act="cs-next">Переписал в тетрадь — дальше</button></div>`;
+    return h;
+  }
+
+  if (step.t === "warm") {
+    return h + `<div class="cs-stage warm"><span>разомнёмся</span>${esc(step.lead || "то же самое, но с маленькими числами — чтобы увидеть ход целиком")}</div>
+      <div class="ls-body cs-body">
+        <h3 class="cs-h">${esc(step.title)}</h3>
+        ${illHTML(step.ill)}
+        <p class="cs-q">${esc(step.q)}</p>
+        <div class="cs-steps">${(step.steps || []).map(x => razLine(x)).join("")}</div>
+        <div class="bk-ex-a">${esc(step.a)}</div>
+        ${step.note ? `<div class="bk-t"><span>отсюда правило</span>${esc(step.note)}</div>` : ""}
+      </div>
+      <div class="ls-nav"><button class="primary" data-act="cs-next">Понял — к настоящей задаче</button></div>`;
+  }
+
+  if (step.t === "recap") {
+    return h + `<div class="cs-stage recap"><span>итог приёма</span>${esc(step.part || "")}</div>
+      <div class="ls-body cs-body">
+        <h3 class="cs-h">${esc(step.title)}</h3>
+        <div class="cs-can"><span>теперь ты умеешь</span><ul>${(step.can || []).map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
+        ${(step.f || []).length ? `<div class="bk-f">${step.f.map(f =>
+          `<div class="bk-fi"><b>${mathHTML(f[0])}</b><span>${esc(f[1])}</span></div>`).join("")}</div>` : ""}
+        ${step.trap ? `<div class="bk-t"><span>где тут ошибаются</span>${esc(step.trap)}</div>` : ""}
+      </div>
+      <div class="ls-nav"><button class="primary" data-act="cs-next">Дальше</button></div>`;
+  }
+
+  if (step.t === "real") {
+    const q = qById(step.id);
+    if (!q) return h + `<p class="rest">Задача не загрузилась.</p>
+      <div class="ls-nav"><button class="primary" data-act="cs-next">Пропустить</button></div>`;
+    const rr = st.solved[i];
+    h += `<div class="cs-stage real"><span>настоящее задание — решай сам</span>Подглядывать в разбор нельзя, а в свою тетрадь можно. Разбор откроется после ответа</div>
+      <div class="ls-body qbody split">${trTaskAsk(q)}<div class="qsol-col">`;
+    if (rr) {
+      h += `<div class="dr-r ${rr.ok ? "ok" : "no"}"><b>${rr.ok ? "Верно" : "Правильный ответ: " + esc(q.answer)}</b></div>`;
+      const z = razOf(q.id);
+      if (z) h += `<h4 class="sec">Как это решалось</h4>` + razborHTML(q, z);
+    } else {
+      h += `<div class="dr-in"><input type="text" id="qa" placeholder="ответ" autocomplete="off">
+        <button class="dr-go go" data-act="cs-real">Проверить</button></div>
+        <p class="foot">Это задача из настоящего банка ЕГЭ, без упрощений.</p>`;
+    }
+    h += `</div></div><div class="ls-nav">${rr ? `<button class="primary" data-act="cs-next">Дальше</button>`
+      : `<button class="ghost" data-act="cs-back">Не помню — назад к примеру</button>`}</div>`;
     return h;
   }
 
@@ -118,7 +190,7 @@ function renderCourse() {
     return h;
   }
   const r = stt.res;
-  h += `<div class="cs-stage solve"><span>теперь ты</span>та же задача, другие числа. Подсказки нет — это и есть проверка${stt.tries ? `. Попытка ${stt.tries + 1}` : ""}</div>
+  h += `<div class="cs-stage solve"><span>теперь ты сам</span>Задача того же вида, числа другие. Открой тетрадь с переписанным решением и делай по аналогии: та же формула, те же шаги, свои числа${stt.tries ? `. Попытка ${stt.tries + 1}` : ""}</div>
     <div class="ls-body qbody split">${trTaskAsk(tw.q)}<div class="qsol-col">`;
   if (r) {
     h += `<div class="dr-r ${r.ok ? "ok" : "no"}"><b>${r.ok ? "Верно" : "Правильный ответ: " + esc(tw.q.answer)}</b></div>
@@ -165,6 +237,17 @@ function crsCheck() {
   stt.res = { ok: !!ok, ans: v };
   save(); render(); window.scrollTo(0, 0);
 }
+function crsReal() {
+  const st = crsState(), step = crsSteps()[st.i];
+  const el = $("#qa"); const v = el ? el.value.trim() : "";
+  if (!v) { toast("Впиши ответ"); return; }
+  const q = qById(step.id);
+  const ok = q && sameAnswer(v, q.answer);
+  st.solved[st.i] = { ok: !!ok, ans: v };
+  if (q) markSolved(q.id, !!ok);          /* засчитываем в общий прогресс по заданию */
+  save(); render(); window.scrollTo(0, 0);
+}
+
 function crsAgain() {
   const st = crsState();
   const stt = st.solved[st.i] = st.solved[st.i] || { tries: 0, res: null };
@@ -173,7 +256,8 @@ function crsAgain() {
 }
 function crsBack() {
   const st = crsState(), steps = crsSteps();
-  for (let j = st.i - 1; j >= 0; j--) if (steps[j].t === "show" || steps[j].t === "teach") { st.i = j; break; }
+  for (let j = st.i - 1; j >= 0; j--)
+    if (steps[j].t === "show" || steps[j].t === "warm" || steps[j].t === "teach") { st.i = j; break; }
   save(); render(); window.scrollTo(0, 0);
 }
 function crsQuiz(i, o) {
