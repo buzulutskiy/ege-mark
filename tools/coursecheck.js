@@ -28,7 +28,11 @@ const mathHTML = msb.__m;
 const GRAPH = require(path.join(root, "gen/graph.js"));
 const dsb = { GRAPH, console, module: { exports: {} } }; vm.createContext(dsb);
 vm.runInContext(fs.readFileSync(path.join(root, "gen/draw.js"), "utf8"), dsb);
-const DRAW = dsb.module.exports;
+dsb.DRAW = dsb.module.exports;
+/* рисунки, дописанные по приёмам, лежат в gen/ill-*.js и дополняют тот же DRAW */
+fs.readdirSync(path.join(root, "gen")).filter(f => /^ill-.*\.js$/.test(f)).forEach(f =>
+  vm.runInContext(fs.readFileSync(path.join(root, "gen", f), "utf8"), dsb, { filename: f }));
+const DRAW = dsb.DRAW;
 
 /* генераторы — какие виды существуют */
 const RND = require(path.join(root, "gen/rnd.js"));
