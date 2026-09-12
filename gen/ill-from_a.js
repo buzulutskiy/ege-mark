@@ -29,6 +29,31 @@
   /* человечек-кружок: простое «тело» */
   function body(x, y, color) { return `<circle cx="${x}" cy="${y}" r="7" fill="${color || ACC}"/>`; }
 
+  /* формула с индексами: parts — строка, либо ["0","sub"] / ["2","sup"].
+     Индексы делаем сдвигом базовой линии, а не символами ₀ и ²: они есть не во всех Times.
+     Скопировано из gen/ill-form.js. */
+  function formula(x, y, parts, o) {
+    o = o || {};
+    let shift = 0, inner = "";
+    parts.forEach(p => {
+      const t = Array.isArray(p) ? p[0] : String(p).replace(/^ /, "\u00a0");
+      const want = Array.isArray(p) ? (p[1] === "sub" ? 4 : -5) : 0;
+      const dy = want - shift;
+      const dx = (shift && !want) ? 2 : 0;
+      shift = want;
+      inner += `<tspan dy="${dy}"${dx ? ` dx="${dx}"` : ""}${want ? ' font-size="10"' : ""}>${esc(t)}</tspan>`;
+    });
+    return `<text x="${x}" y="${y}" font-size="${o.size || 14}" ${F} text-anchor="${o.anchor || "middle"}"
+      fill="${o.color || INK}" font-style="italic">${inner}</text>`;
+  }
+
+  /* подпись оси, как её ставит GRAPH.plot: буква курсивом, единица прямая, цвет — чернила */
+  function axisName(x, y, letter, unit, o) {
+    o = o || {};
+    return `<text x="${x}" y="${y}" font-size="${o.size || 11}" ${F} text-anchor="${o.anchor || "middle"}"
+      fill="${o.color || INK}"><tspan font-style="italic">${esc(letter)}</tspan>, ${esc(unit)}</text>`;
+  }
+
   /* Подпись под картинкой. Переносит строки по ширине, поэтому текст не вылезает за край
      и не обрезается на узком экране. Принимает готовый <svg> и возвращает новый, выше на подпись. */
   function withCaption(inner, lines) {
@@ -87,25 +112,35 @@
         x: { label: "t, с", from: 0, to: 5, step: 0.5, tick: 1 },
         y: { label: "a, м/с²", from: 0, to: 5, step: 0.5, tick: 1 },
         lines: [{ pts: [[0, 4], [2, 4], [2, 0], [5, 0]], color: ACC }],
-        notes: [{ x: 1, y: 4.6, t: "кран открыт", color: ACC, size: 13 },
-                { x: 3.5, y: 0.7, t: "кран закрыт", color: MUTE, size: 13 }],
+        /* число прибавки — второй строкой заметки: ради этой связки рисунок и делается */
+        notes: [{ x: 1.8, y: 4.85, t: "кран открыт", color: ACC, size: 13 },
+                { x: 1.8, y: 4.35, t: "+4 м/с каждую секунду", color: ACC, size: 13 },
+                { x: 3.7, y: 1.15, t: "кран закрыт", color: MUTE, size: 13 },
+                { x: 3.7, y: 0.7, t: "прибавки больше нет", color: MUTE, size: 13 }],
       });
       const bot = GRAPH.plot({
         cell,
         x: { label: "t, с", from: 0, to: 5, step: 0.5, tick: 1 },
         y: { label: "v, м/с", from: 0, to: 10, step: 1, tick: 2 },
         lines: [{ pts: [[0, 0], [2, 8], [5, 8]], color: BLUE }],
-        notes: [{ x: 1.4, y: 2.6, t: "скорость растёт", color: BLUE, size: 13 },
-                { x: 3.6, y: 6.6, t: "осталась 8 м/с", color: MUTE, size: 13 }],
+        notes: [{ x: 3.6, y: 6.6, t: "осталась 8 м/с", color: MUTE, size: 13 }],
       });
       const st = stack([top, bot], 10);
       const hTop = sizeOf(top).h;
       const xc = mL + 2 * sx;                      /* вертикаль через t = 2 с */
+      const zeroTop = mT + 5 * (cell / 0.5);       /* ось времени верхнего графика */
+      const stepTop = mT + 1 * (cell / 0.5);       /* верх ступеньки: отсюда и ведём пунктир */
+      const botTop = hTop + 10 + mT;               /* верхний край поля нижнего графика */
+      const zeroBot = hTop + 10 + zeroTop;
       let s = st.body;
-      s += `<line x1="${xc}" y1="${mT}" x2="${xc}" y2="${hTop + 10 + mT + 220}" stroke="${MUTE}"
+      /* пунктир рвём на полосе чисел оси и на подписях, иначе он режет их пополам */
+      s += `<line x1="${xc}" y1="${stepTop}" x2="${xc}" y2="${zeroTop}" stroke="${MUTE}"
+        stroke-width="1" stroke-dasharray="5 4"/>`;
+      s += `<line x1="${xc}" y1="${botTop}" x2="${xc}" y2="${zeroBot}" stroke="${MUTE}"
         stroke-width="1" stroke-dasharray="5 4"/>`;
       return withCaption(svg(st.w, st.h, s), [
         "Наверху ускорение, внизу скорость, которая из него набралась.",
+        "Пока кран открыт, скорость набирается по 4 м/с каждую секунду.",
         "Ускорение упало до нуля — скорость не упала, она просто перестала расти.",
       ]);
     },
@@ -117,22 +152,29 @@
         { x: 155, big: "v", u: "м/с", sub: "скорость" },
         { x: 300, big: "s", u: "м", sub: "путь" },
       ];
+      const top = 78, cy = 114;                    /* коробки ниже: над стрелками стоят формулы */
       let s = "";
       boxes.forEach(b => {
         const cx = b.x + 55;
-        s += `<rect x="${b.x}" y="30" width="110" height="72" rx="10" fill="#fff" stroke="${INK}" stroke-width="2"/>`;
-        s += text(cx, 66, b.big, { size: 30, bold: true, italic: true, color: ACC });
-        s += text(cx, 84, b.u, { size: 12, color: MUTE });
-        s += text(cx, 118, b.sub, { size: 12, color: MUTE });
+        s += `<rect x="${b.x}" y="${top}" width="110" height="72" rx="10" fill="#fff" stroke="${INK}" stroke-width="2"/>`;
+        s += text(cx, cy, b.big, { size: 30, bold: true, italic: true, color: ACC });
+        s += text(cx, cy + 18, b.u, { size: 12, color: MUTE });
+        s += text(cx, top + 88, b.sub, { size: 12, color: MUTE });
       });
-      s += arrow(124, 66, 152, 66, INK, 3);
-      s += arrow(269, 66, 297, 66, INK, 3);
-      s += text(118, 148, "v = v₀ + a · t", { size: 15, bold: true });
-      s += text(282, 174, "s = v · t, если a = 0", { size: 14 });
-      s += text(282, 196, "s = v₀ · t + a · t² : 2, если a ≠ 0", { size: 14 });
-      s += arrow(210, 216, 65, 216, MUTE, 1.6, "6 4");
-      s += text(150, 234, "назад: v₀ = v − a · t", { size: 13, color: MUTE });
-      return withCaption(svg(420, 248, s), [
+      s += arrow(124, cy - 8, 152, cy - 8, INK, 3);
+      s += arrow(269, cy - 8, 297, cy - 8, INK, 3);
+      /* формула первого шага — над своей стрелкой */
+      s += formula(138, 58, ["v =", " v", ["0", "sub"], " + a · t"], { size: 14 });
+      /* две формулы пути — у второй стрелки, двумя строками */
+      s += formula(196, 40, ["s = v · t"], { size: 12, anchor: "start" });
+      s += text(262, 40, "если a = 0", { size: 11, color: MUTE, anchor: "start" });
+      s += formula(196, 62, ["s =", " v", ["0", "sub"], " · t + (a · t", ["2", "sup"], ")/2"], { size: 12, anchor: "start" });
+      s += text(353, 62, "если a ≠ 0", { size: 11, color: MUTE, anchor: "start" });
+      /* обратная стрелка идёт точно под коробками v и a */
+      s += arrow(210, 190, 65, 190, MUTE, 1.6, "6 4");
+      s += text(60, 208, "назад:", { size: 13, color: MUTE, anchor: "start" });
+      s += formula(108, 208, ["v", ["0", "sub"], " = v − a · t"], { size: 13, color: MUTE, anchor: "start" });
+      return withCaption(svg(420, 222, s), [
         "С графика ускорения до пути два шага, и перепрыгнуть средний нельзя.",
       ]);
     },
@@ -145,12 +187,19 @@
         const zero = oy + 44;
         s += arrow(20, zero, 206, zero, INK, 1.5);
         s += arrow(34, oy + 82, 34, oy + 6, INK, 1.5);
-        s += text(209, oy + 60, "t, с", { size: 11, anchor: "start", color: MUTE });
-        s += text(40, oy + 14, "a, м/с²", { size: 11, anchor: "start", color: MUTE });
+        /* подписи осей — как их ставит GRAPH.plot: чернилами, буква курсивом */
+        s += axisName(209, oy + 60, "t", "с", { anchor: "start" });
+        s += axisName(40, oy + 14, "a", "м/с²", { anchor: "start" });
         s += draw(oy, zero);
         s += text(250, oy + 36, l1, { size: 12, anchor: "start", bold: true });
         s += text(250, oy + 58, l2, { size: 12, anchor: "start", color: MUTE });
         return s;
+      };
+      /* деление с числом на оси времени */
+      const secTick = (x, zero, t, o) => {
+        o = o || {};
+        return `<line x1="${x}" y1="${zero - 4}" x2="${x}" y2="${zero + 4}" stroke="${INK}" stroke-width="1.2"/>`
+          + text(x + (o.dx || 0), zero + (o.up ? -8 : 16), t, { size: 11, anchor: o.anchor || "middle" });
       };
       let s = "";
       /* 1. одна ступенька, вся ниже нуля: ищем скорость в начале */
@@ -158,16 +207,22 @@
         let g = `<line x1="42" y1="${zero + 20}" x2="196" y2="${zero + 20}" stroke="${ACC}" stroke-width="2.4"/>`;
         g += `<line x1="150" y1="${zero - 4}" x2="150" y2="${zero + 4}" stroke="${INK}" stroke-width="1.4"/>`;
         g += `<circle cx="150" cy="${zero + 20}" r="3" fill="${ACC}"/>`;
-        g += text(150, zero - 10, "v", { size: 13, italic: true, color: BLUE });
-        g += text(48, zero - 10, "?", { size: 15, bold: true, color: BLUE, anchor: "start" });
+        /* буквы опущены к самой линии и подписаны словами */
+        g += text(150, zero + 36, "v", { size: 13, italic: true, color: BLUE });
+        g += text(150, zero + 50, "тут известна", { size: 10, color: MUTE });
+        g += `<circle cx="42" cy="${zero + 20}" r="3" fill="${BLUE}"/>`;
+        g += text(52, zero + 36, "?", { size: 14, bold: true, color: BLUE });
+        g += text(58, zero + 50, "а тут какая?", { size: 10, color: MUTE });
         return g;
       }, "одна ступенька", "ищем скорость в начале");
       /* 2. вторая ступенька нулевая: s = v · t */
       s += mini(rowH, (oy, zero) => {
         let g = `<polyline fill="none" stroke="${ACC}" stroke-width="2.4" stroke-linejoin="round"
           points="42,${zero - 22} 110,${zero - 22} 110,${zero} 196,${zero}"/>`;
-        g += `<rect x="126" y="${zero - 18}" width="30" height="18" fill="${GREEN}" fill-opacity="0.18"
-          stroke="${GREEN}" stroke-width="1"/>`;
+        /* нужная секунда — светлая полоса по всей высоте поля, ровно от излома, а не ступенька */
+        g += `<rect x="110" y="${zero - 26}" width="34" height="40" fill="${ACC}" fill-opacity="0.12" stroke="none"/>`;
+        g += secTick(110, zero, "2");
+        g += secTick(144, zero, "3");
         return g;
       }, "вторая ступенька — ноль", "s = v · t");
       /* 3. вторая ступенька с минусом: длинная формула */
@@ -177,6 +232,8 @@
           stroke-dasharray="4 3"/>`;
         g += `<line x1="120" y1="${zero + 18}" x2="196" y2="${zero + 18}" stroke="${ACC}" stroke-width="3"/>`;
         g += `<rect x="120" y="${zero}" width="76" height="18" fill="${ACC}" fill-opacity="0.16" stroke="none"/>`;
+        g += secTick(120, zero, "10", { up: true, dx: -4, anchor: "end" });
+        g += secTick(196, zero, "15", { up: true });
         return g;
       }, "вторая с минусом", "длинная формула");
       return withCaption(svg(420, rowH * 3 - 6, s), [

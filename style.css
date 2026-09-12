@@ -1063,3 +1063,18 @@ body.in-lesson .tabs-wrap{display:none}
 .nb-t{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:8px}
 .nb-f{margin:10px 0;font-size:17px;overflow-x:auto}
 .nb-a{margin-top:14px;text-transform:none;letter-spacing:0;font-size:16px;font-weight:700;color:var(--ink)}
+
+/* ── микрошаги: один экран — одна мысль ── */
+.cs-stage.idea{--c:#1d4ed8} .cs-stage.check{--c:#7c3aed} .cs-stage.read{--c:#0f766e}
+.cs-stage.ask{--c:#0f766e} .cs-stage.pickf{--c:#c8571a} .cs-stage.micro{--c:#c8571a} .cs-stage.whole{--c:#15803d}
+.cs-one{max-width:620px;margin:0 auto}
+.cs-p.big{font-size:18px;line-height:1.65;margin:0 0 16px}
+.cs-cond{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 16px}
+.cs-fig{text-align:center;margin-bottom:8px} .cs-fig img,.cs-fig svg{max-width:100%;height:auto}
+.cs-fig table{margin:0 auto;border-collapse:collapse} .cs-fig td,.cs-fig th{border:1px solid var(--line);padding:4px 10px}
+.cs-txt{font-size:15px;line-height:1.5;color:var(--dim)}
+.cs-simple{margin:0 0 8px;padding:11px 14px;background:var(--okbg);border-radius:11px;font-size:15px;line-height:1.5}
+.cs-simple>span{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:3px}
+.cs-fmain{text-align:center;font-size:25px;margin:10px 0 16px;padding:16px;background:var(--card2);border-radius:12px;overflow-x:auto}
+.cs-why,.cs-need{margin:0 0 12px;padding:11px 14px;border-radius:11px;background:var(--card2);font-size:15px;line-height:1.55}
+.cs-why>span,.cs-need>span{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}

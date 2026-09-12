@@ -82,7 +82,7 @@
         guides: [[[2, 0], [2, 4]]],
         marks: [[0, 0], [2, 4], [4, 1]],
         notes: [
-          { x: 0.6, y: 0.25, t: "(0; 0)", size: 12, anchor: "start" },
+          { x: 0.3, y: 0.12, t: "(0; 0)", size: 12, anchor: "start" },
           { x: 2.12, y: 4.05, t: "(2; 4)", size: 12, anchor: "start" },
           { x: 4.08, y: 1.1, t: "(4; 1)", size: 12, anchor: "start" },
           { x: 2, y: 4.75, t: "здесь развернулось", size: 13, color: MUTE },
@@ -103,26 +103,26 @@
       const M = mapper(cell, X, Y);
       const plot = GRAPH.plot({
         cell, x: X, y: Y,
-        lines: [{ pts: [[0, 20], [2, 30], [5, 0], [6, 0]], color: ACC }],
+        lines: [{ pts: [[0, 20], [2, 30], [5, 0]], color: ACC }],
         guides: [[[0, 20], [6, 20]]],
       });
       const ay = M.py(0);
       let s = "";
       s += measure(M.px(2), M.py(20), M.py(30), BLUE);
-      s += text(M.px(2) - 10, M.py(22.9), "10 м", { size: 13, color: BLUE, anchor: "end" });
-      s += measure(M.px(5), M.py(20), M.py(0), GREEN);
+      s += text(M.px(2) - 8, M.py(21.7), "10 м", { size: 13, color: BLUE, anchor: "end" });
+      s += measure(M.px(5), M.py(20), M.py(1.5), GREEN);
       s += text(M.px(5) + 7, M.py(10), "20 м", { size: 14, color: GREEN, anchor: "start", bold: true });
       /* уровень старта: величина курсивом с настоящим нижним индексом */
       s += `<text x="${M.px(6)}" y="${M.py(21.4)}" font-size="13" ${F} text-anchor="end" fill="${MUTE}">старт: `
         + `<tspan font-style="italic">x</tspan><tspan font-size="9" dy="3">0</tspan>`
-        + `<tspan dy="-3"> = 20</tspan></text>`;
+        + `<tspan dy="-3">&#160;= 20</tspan></text>`;
       /* секунда-ответ: жирная точка на оси, своё деление и подпись рядом */
-      s += `<line x1="${M.px(5)}" y1="${ay - 6}" x2="${M.px(5)}" y2="${ay + 6}" stroke="${ACC}" stroke-width="2"/>`;
-      s += `<circle cx="${M.px(5)}" cy="${ay}" r="4" fill="${ACC}"/>`;
-      s += text(M.px(5) + 8, ay - 10, "5 с — ответ", { size: 13, color: ACC, anchor: "start", bold: true });
+      s += `<circle cx="${M.px(5)}" cy="${ay}" r="4" fill="#fff" stroke="${ACC}" stroke-width="2"/>`;
+      s += `<line x1="${M.px(5)}" y1="${ay - 9}" x2="${M.px(5)}" y2="${ay + 9}" stroke="${ACC}" stroke-width="2"/>`;
+      s += text(M.px(5) + 8, ay - 24, "5 с", { size: 13, color: ACC, anchor: "start", bold: true });
       return withCaption(over(plot, s), [
         "Меряем от старта, а не от нуля.",
-        "Дальше всего тело было внизу, и в ответ идёт секунда.",
+        "Дальше всего тело было внизу, на 5-й секунде: в ответ идёт она, а не метры.",
       ]);
     },
 

@@ -109,29 +109,32 @@ Object.assign(DRAW, {
       y: { label: "x, м", from: 0, to: 12, step: 2, tick: 2 },
       lines: [{ pts: parabPts(2, 2, 0, 3, 60), color: ACC, dots: false, curve: true }],
       guides: [[[0, 2], [3, 2]]],
-      reads: [[2, 6, "t = 2 с", "x = 6 м"]],
+      /* подписи короткие, «2 с» и «6 м»: длинные ложились поперёк линий сетки */
+      reads: [[2, 6, "2 с", "6 м"]],
       notes: [{ x: 0.1, y: 1, t: "старт, x₀ = 2", color: MUTE, size: 13, anchor: "start" }],
     });
     let s = ring(px(2), py(6), ACC, 9);
     s += braceV(px(2.25), py(6), py(2), INK, 7);
     s += text(px(2.25) + 22, py(4) - 7, "сдвиг", { size: 13, anchor: "start", color: INK });
     s += text(px(2.25) + 22, py(4) + 10, "x − x₀ = 4 м", { size: 13, anchor: "start", color: INK, bold: true });
-    return withCaption(over(plot, s), "В формулу идёт не шестёрка, а сдвиг — 4 метра.");
+    return withCaption(over(plot, s), "В формулу идёт не шестёрка, а сдвиг — 4 м");
   },
 
   /* ── teach[2]: где тело и как быстро — это разные числа ── */
   parabWhereVsFast() {
+    /* клетка по x — полсекунды, по y — 2 м и 2 м/с: обе отмеченные точки
+       (3; 18) и (3; 12) попадают ровно в узлы сетки, гадать на глаз нечего */
     const left = GRAPH.plot({
-      cell: 24,
-      x: { label: "t, с", from: 0, to: 3.5, step: 0.5, tick: 1 },
-      y: { label: "x, м", from: 0, to: 20, step: 2.5, tick: 5 },
+      cell: 18,
+      x: { label: "t, с", from: 0, to: 3, step: 0.5, tick: 1 },
+      y: { label: "x, м", from: 0, to: 20, step: 2, tick: 4 },
       lines: [{ pts: parabPts(0, 4, 0, 3, 60), color: ACC, dots: false, curve: true }],
       reads: [[3, 18, "3 с", "18 м"]],
     });
     const right = GRAPH.plot({
-      cell: 24,
-      x: { label: "t, с", from: 0, to: 3.5, step: 0.5, tick: 1 },
-      y: { label: "v, м/с", from: 0, to: 14, step: 2, tick: 4 },
+      cell: 18,
+      x: { label: "t, с", from: 0, to: 3, step: 0.5, tick: 1 },
+      y: { label: "v, м/с", from: 0, to: 12, step: 2, tick: 4 },
       lines: [{ pts: [[0, 0], [3, 12]], color: BLUE, dots: true }],
       reads: [[3, 12, "3 с", "12 м/с"]],
     });
@@ -148,52 +151,64 @@ Object.assign(DRAW, {
 
   /* ── teach[3]: строки таблицы — это точки той же дуги ── */
   parabTable() {
-    const cell = 24, dx = 150, mL = 46, mT = 28;
-    const sx = cell / 0.5, sy = cell / 1;             /* 48 и 24 пикселя на единицу */
+    const cell = 17, dx = 150, mL = 46, mT = 28;
+    const sx = cell / 0.25, sy = cell / 1;            /* 68 и 17 пикселей на единицу */
     const px = u => dx + mL + u * sx;
     const py = u => mT + (8 - u) * sy;
+    /* ось времени обрывается там же, где дуга упирается в верх поля (t = √6):
+       пустой правой четверти не остаётся */
     const plot = GRAPH.plot({
       cell,
-      x: { label: "t, с", from: 0, to: 3, step: 0.5, tick: 1 },
+      x: { label: "t, с", from: 0, to: 2.5, step: 0.25, tick: 1 },
       y: { label: "x, м", from: 0, to: 8, step: 1, tick: 2 },
       lines: [{ pts: parabPts(2, 2, 0, Math.sqrt(6), 60), color: ACC, dots: false, curve: true }],
-      notes: [{ x: 0.3, y: 1.5, t: "старт, x₀", color: ACC, size: 12, anchor: "start" }],
     });
     const [pw, ph] = dims(plot);
-    const W = dx + pw, H = ph;
 
-    /* таблица слева: шапка и три строки */
+    /* таблица слева: шапка и три строки. Стоит низко — так все три точки дуги
+       оказываются выше неё, и стрелки идут вверх-вправо, не перехлёстываясь */
     const rows = [[0, 2], [1, 3], [2, 6]];
+    const cols = [ACC, BLUE, GREEN];
     const tx = 8, tw = 116, col = tx + 58;
-    const head = 88, r0 = 114, dr = 26;
-    let s = `<rect x="${tx}" y="${head - 20}" width="${tw}" height="${20 + dr * 3 + 10}" rx="4"
+    const head = 114, r0 = 140, dr = 26;
+    const rtop = head - 20, rh = 20 + dr * 3 + 10;
+    const W = dx + pw, H = Math.max(ph, rtop + rh + 8);
+
+    let s = `<rect x="${tx}" y="${rtop}" width="${tw}" height="${rh}" rx="4"
       fill="#fff" stroke="${INK}" stroke-width="1.4"/>`;
     s += `<line x1="${tx}" y1="${head + 6}" x2="${tx + tw}" y2="${head + 6}" stroke="${INK}" stroke-width="1.4"/>`;
-    s += `<line x1="${col}" y1="${head - 20}" x2="${col}" y2="${head + 6 + dr * 3}" stroke="${INK}" stroke-width="1"/>`;
+    /* разделитель колонок — до самого низа рамки, без зазора в углу */
+    s += `<line x1="${col}" y1="${rtop}" x2="${col}" y2="${rtop + rh}" stroke="${INK}" stroke-width="1"/>`;
     /* шапка как на осях: буква курсивом, единица прямая */
     const th = (x, l, u) => `<text x="${x}" y="${head}" font-size="13" ${F} text-anchor="middle" fill="${INK}"><tspan font-style="italic">${l}</tspan>, ${u}</text>`;
     s += th(tx + 29, "t", "с");
     s += th(col + 29, "x", "м");
     rows.forEach((r, i) => {
-      const y = r0 + i * dr, c = i === 0 ? ACC : INK;
-      s += text(tx + 29, y, String(r[0]), { size: 14, color: c, bold: i === 0 });
-      s += text(col + 29, y, String(r[1]), { size: 14, color: c, bold: i === 0 });
+      const y = r0 + i * dr;
+      s += text(tx + 29, y, String(r[0]), { size: 14, color: cols[i], bold: i === 0 });
+      s += text(col + 29, y, String(r[1]), { size: 14, color: cols[i], bold: i === 0 });
     });
 
-    /* стрелки: каждая строка — к своей точке на дуге */
-    const cols = [ACC, BLUE, GREEN];
-    const bow = [45, 0, -60];
+    /* стрелки: у каждой строки своя дорожка. Верхняя строка идёт по верхней
+       дорожке к ближней точке, нижняя — по нижней и сворачивает вверх уже за
+       чужими остриями, поэтому линии нигде не пересекаются и не лезут на дугу */
+    const turn = [168, 232, 272];
     rows.forEach((r, i) => {
       const X = px(r[0]), Y = py(r[1]);
       const x1 = tx + tw + 6, y1 = r0 + i * dr - 5;
-      const a = Math.atan2(Y - y1, X - x1);
-      s += curveArrow(x1, y1, X - 11 * Math.cos(a), Y - 11 * Math.sin(a),
-        x1 + (X - x1) * 0.45, y1 + bow[i], cols[i]);
+      const cx = turn[i], cy = y1;
+      const ux = X - cx, uy = Y - cy, L = Math.hypot(ux, uy) || 1;
+      s += curveArrow(x1, y1, X - 9 * ux / L, Y - 9 * uy / L, cx, cy, cols[i]);
     });
 
-    /* точки на дуге поверх графика */
+    /* точки на дуге: кольцо того же цвета, что стрелка к нему */
     let dots = "";
-    rows.forEach((r, i) => { dots += ring(px(r[0]), py(r[1]), i === 0 ? ACC : INK, 6); });
+    rows.forEach((r, i) => {
+      dots += `<circle cx="${px(r[0])}" cy="${py(r[1])}" r="6" fill="#fff" stroke="${cols[i]}" stroke-width="2"/>`;
+    });
+    /* подпись старта — над началом дуги, с тонкой выноской к кольцу */
+    dots += `<line x1="${px(0) + 8}" y1="${py(2) - 26}" x2="${px(0) + 3}" y2="${py(2) - 7}" stroke="${ACC}" stroke-width="1"/>`;
+    dots += text(px(0) + 8, py(2) - 30, "старт, x₀", { size: 12, color: ACC, anchor: "start" });
 
     const inner = shift(guts(plot), dx, 0) + s + dots;
     return withCaption(svg(W, H, inner), "Три строки таблицы — три точки одной и той же дуги.");

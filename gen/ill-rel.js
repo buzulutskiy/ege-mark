@@ -1,6 +1,7 @@
 /* global GRAPH, DRAW */
 /* Иллюстрации к приёму «относительность движения»:
-   река (течение помогает или мешает) и два тела на дороге (как сокращается щель). */
+   река (течение помогает или мешает) и два тела на дороге (как сокращается щель).
+   Длины стрелок в обоих рисунках взяты от одного масштаба: пиксели пропорциональны км/ч. */
 
 (function () {
   const F = "style=\"font-family:'Times New Roman',Times,Georgia,serif\"";
@@ -76,89 +77,115 @@
       c 1,7 0,7 8,7 L ${x2 - 8},${y - 6} c 7,0 8,0 8,6" fill="none" stroke="${MUTE}" stroke-width="1.4"/>`;
   }
 
+  /* измерительная скобка: линия с засечками на концах */
+  function span(x1, x2, y, color) {
+    const c = color || MUTE;
+    return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${c}" stroke-width="1.6"/>
+      <line x1="${x1}" y1="${y - 5}" x2="${x1}" y2="${y + 5}" stroke="${c}" stroke-width="1.6"/>
+      <line x1="${x2}" y1="${y - 5}" x2="${x2}" y2="${y + 5}" stroke="${c}" stroke-width="1.6"/>`;
+  }
+
   Object.assign(DRAW, {
-    /* ── Река: одна лодка, два числа с берега ── */
+    /* ── Река: одна лодка, два числа с берега ──
+       масштаб стрелок: 15,8 px на км/ч → 12 км/ч = 190 px, 8 км/ч = 127 px */
     relRiver() {
+      const K = 190 / 12;
       let s = "";
       /* вода и берега */
       s += `<rect x="10" y="26" width="400" height="130" fill="#eef4fb" stroke="none"/>`;
       s += `<line x1="10" y1="26" x2="410" y2="26" stroke="${INK}" stroke-width="2"/>`;
       s += `<line x1="10" y1="156" x2="410" y2="156" stroke="${INK}" stroke-width="2"/>`;
       s += text(30, 20, "берег", { size: 12, color: MUTE, anchor: "start" });
-      s += text(30, 151, "берег", { size: 12, color: MUTE, anchor: "start" });
+      s += text(30, 170, "берег", { size: 12, color: MUTE, anchor: "start" });
       /* течение */
       for (let x = 30; x <= 300; x += 90) s += arrow(x, 94, x + 36, 94, "#9db8d6", 1.8);
-      s += text(406, 88, "течение 2 км/ч", { size: 12, color: WATER, anchor: "end" });
+      s += text(340, 112, "течение 2 км/ч", { size: 12, color: WATER });
 
-      /* по течению */
+      /* по течению: нос верхней лодки на x = 96 */
       s += boat(70, 60, 1);
-      s += arrow(100, 60, 290, 60, GREEN, 2.6);
-      s += text(199, 48, "с берега видно 12 км/ч", { size: 13, color: GREEN });
-      s += text(199, 76, "10 своя + 2 течение", { size: 11.5, color: MUTE });
+      const upA = 96, upB = Math.round(upA + K * 12);
+      s += arrow(upA, 60, upB, 60, GREEN, 2.6);
+      s += text((upA + upB) / 2, 48, "с берега видно 12 км/ч", { size: 13, color: GREEN });
+      s += text((upA + upB) / 2, 76, "10 своя + 2 течение", { size: 11.5, color: MUTE });
 
-      /* против течения */
+      /* против течения: нос нижней лодки на x = 246 */
       s += boat(272, 128, -1);
-      s += arrow(240, 128, 130, 128, ACC, 2.6);
-      s += text(181, 116, "с берега видно 8 км/ч", { size: 13, color: ACC });
-      s += text(181, 146, "10 своя − 2 течение", { size: 11.5, color: MUTE });
+      const dnA = 246, dnB = Math.round(dnA - K * 8);
+      s += arrow(dnA, 128, dnB, 128, ACC, 2.6);
+      s += text(Math.round((dnA + dnB) / 2), 116, "с берега видно 8 км/ч", { size: 13, color: ACC });
+      s += text(Math.round((dnA + dnB) / 2), 146, "10 своя − 2 течение", { size: 11.5, color: MUTE });
 
       /* числовая полоска */
-      s += `<line x1="60" y1="200" x2="380" y2="200" stroke="${INK}" stroke-width="1.8"/>`;
+      s += `<line x1="60" y1="214" x2="380" y2="214" stroke="${INK}" stroke-width="1.8"/>`;
       [[90, "8", ACC], [220, "10", INK], [350, "12", GREEN]].forEach(t => {
-        s += `<line x1="${t[0]}" y1="194" x2="${t[0]}" y2="206" stroke="${t[2]}" stroke-width="2"/>`;
-        s += text(t[0], 220, t[1], { size: 14, bold: true, color: t[2] });
+        s += `<line x1="${t[0]}" y1="208" x2="${t[0]}" y2="220" stroke="${t[2]}" stroke-width="2"/>`;
+        s += text(t[0], 234, t[1], { size: 14, bold: true, color: t[2] });
       });
-      s += brace(90, 220, 192) + text(155, 174, "течение 2", { size: 12, color: MUTE });
-      s += brace(220, 350, 192) + text(285, 174, "течение 2", { size: 12, color: MUTE });
-      s += text(220, 242, "собственная скорость лодки", { size: 12.5, color: MUTE });
+      s += text(396, 234, "км/ч", { size: 12, color: MUTE });
+      s += brace(90, 220, 206) + text(155, 188, "течение 2", { size: 12, color: MUTE });
+      s += brace(220, 350, 206) + text(285, 188, "течение 2", { size: 12, color: MUTE });
+      s += text(220, 256, "собственная скорость лодки", { size: 12.5, color: MUTE });
 
-      return withCaption(svg(420, 254, s), [
+      return withCaption(svg(420, 268, s), [
         "Лодка одна и та же. Течение отодвигает её от собственной скорости на одно и то же число в обе стороны —",
         "поэтому разница между 12 и 8 это два течения, а не одно.",
       ]);
     },
 
-    /* ── Два тела: навстречу и вдогонку ── */
+    /* ── Два тела: навстречу и вдогонку ──
+       масштаб стрелок: 1,1 px на км/ч → 60 км/ч = 66 px, 40 км/ч = 44 px */
     relGap() {
+      const K = 1.1, L60 = Math.round(60 * K), L40 = Math.round(40 * K);
       let s = "";
       const road = (yTop, yBot) => {
-        let r = `<rect x="10" y="${yTop}" width="400" height="${yBot - yTop}" fill="#f4f2ee" stroke="none"/>`;
+        let r = `<rect x="10" y="${yTop}" width="400" height="${yBot - yTop}" fill="${MUTE}" fill-opacity="0.08"/>`;
         r += `<line x1="10" y1="${yTop}" x2="410" y2="${yTop}" stroke="${MUTE}" stroke-width="1.2"/>`;
         r += `<line x1="10" y1="${yBot}" x2="410" y2="${yBot}" stroke="${MUTE}" stroke-width="1.2"/>`;
         return r;
       };
+      /* щель: острия внутрь, к середине — расстояние съедается с обеих сторон */
       const gap = (xa, xb, y, color) => {
         const mid = (xa + xb) / 2;
-        return arrow(mid, y, xa, y, color, 2) + arrow(mid, y, xb, y, color, 2);
+        return arrow(xa, y, mid, y, color, 2) + arrow(xb, y, mid, y, color, 2);
       };
 
-      /* навстречу */
+      /* ── навстречу ── */
       s += text(10, 20, "навстречу", { size: 13, bold: true, anchor: "start" });
       s += road(54, 100);
-      s += arrow(18, 48, 76, 48, BLUE, 2.2);
-      s += text(47, 38, "60 км/ч", { size: 12.5, color: BLUE });
-      s += arrow(359, 48, 301, 48, ACC, 2.2);
-      s += text(330, 38, "40 км/ч", { size: 12.5, color: ACC });
+      s += arrow(18, 48, 18 + L60, 48, BLUE, 2.2);
+      s += text(18 + L60 / 2, 38, "60 км/ч", { size: 12.5, color: BLUE });
+      s += arrow(362, 48, 362 - L40, 48, ACC, 2.2);
+      s += text(362 - L40 / 2, 38, "40 км/ч", { size: 12.5, color: ACC });
       s += car(45, 78, 1, BLUE);
       s += car(330, 78, -1, ACC);
       s += gap(78, 297, 78, GREEN);
-      s += text(193, 114, "щель сокращается на 100 км за час", { size: 12.5, color: GREEN });
+      s += text(187, 70, "щель", { size: 12, color: MUTE });
+      /* что съедается за час: 60 и 40 встык, вместе 100 */
+      s += arrow(78, 118, 78 + L60, 118, BLUE, 2.2);
+      s += arrow(78 + L60, 118, 78 + L60 + L40, 118, ACC, 2.2);
+      s += span(78, 78 + L60 + L40, 132, GREEN);
+      s += text(78 + (L60 + L40) / 2, 150, "100 км/ч", { size: 12.5, color: GREEN, bold: true });
 
-      /* вдогонку */
-      s += text(10, 146, "вдогонку", { size: 13, bold: true, anchor: "start" });
-      s += road(180, 226);
-      s += arrow(18, 172, 76, 172, BLUE, 2.2);
-      s += text(47, 162, "60 км/ч", { size: 12.5, color: BLUE });
-      s += arrow(248, 172, 306, 172, ACC, 2.2);
-      s += text(277, 162, "40 км/ч", { size: 12.5, color: ACC });
-      s += car(45, 204, 1, BLUE);
-      s += car(275, 204, 1, ACC);
-      s += gap(78, 242, 204, GREEN);
-      s += text(190, 244, "щель сокращается на 20 км за час", { size: 12.5, color: GREEN });
+      /* ── вдогонку ── */
+      s += text(10, 180, "вдогонку", { size: 13, bold: true, anchor: "start" });
+      s += road(214, 260);
+      s += arrow(18, 208, 18 + L60, 208, BLUE, 2.2);
+      s += text(18 + L60 / 2, 198, "60 км/ч", { size: 12.5, color: BLUE });
+      s += arrow(262, 208, 262 + L40, 208, ACC, 2.2);
+      s += text(262 + L40 / 2, 198, "40 км/ч", { size: 12.5, color: ACC });
+      s += car(45, 238, 1, BLUE);
+      s += car(290, 238, 1, ACC);
+      s += gap(78, 257, 238, GREEN);
+      s += text(167, 230, "щель", { size: 12, color: MUTE });
+      /* 40 отложено от того же хвоста, что и 60: выступающий кусок и есть остаток */
+      s += arrow(78, 286, 78 + L60, 286, BLUE, 2.2);
+      s += arrow(78, 300, 78 + L40, 300, ACC, 2.2);
+      s += span(78 + L40, 78 + L60, 312, GREEN);
+      s += text(78 + (L40 + L60) / 2, 330, "20 км/ч", { size: 12.5, color: GREEN, bold: true });
 
-      return withCaption(svg(420, 254, s), [
-        "Машины едут одинаково быстро в обоих случаях. Меняется только направление —",
-        "и от него зависит, складывать или вычитать.",
+      return withCaption(svg(420, 340, s), [
+        "Машины едут одинаково быстро в обоих случаях. Меняется только направление — и от него зависит, складывать или вычитать.",
+        "Навстречу щель сокращается на 60 + 40 = 100 км за час, вдогонку — только на 60 − 40 = 20 км за час.",
       ]);
     },
   });

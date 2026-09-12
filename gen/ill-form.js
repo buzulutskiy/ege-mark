@@ -41,14 +41,24 @@
     if (!m) return inner;
     const W = +m[1], H = +m[2];
     const perLine = Math.max(18, Math.floor(W / 7.4));
+    /* жадный перенос по ширине w */
+    const wrap = (words, w) => {
+      const res = []; let line = "";
+      words.forEach(t => {
+        if (line && (line + " " + t).length > w) { res.push(line); line = t; }
+        else line = line ? line + " " + t : t;
+      });
+      if (line) res.push(line);
+      return res;
+    };
     const out = [];
     (Array.isArray(lines) ? lines : [lines]).forEach(src => {
-      let line = "";
-      String(src).split(" ").forEach(w => {
-        if ((line + " " + w).trim().length > perLine) { out.push(line.trim()); line = w; }
-        else line = (line + " " + w).trim();
-      });
-      if (line) out.push(line);
+      const words = String(src).split(" ").filter(Boolean);
+      const n = wrap(words, perLine).length;
+      /* сужаем ширину, пока строк столько же: так последняя не остаётся огрызком в одно слово */
+      let w = perLine;
+      while (w > 14 && wrap(words, w - 1).length === n) w--;
+      wrap(words, w).forEach(l => out.push(l));
     });
     const inn = inner.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
     const capH = out.length * 19 + 10;
