@@ -1008,3 +1008,22 @@ body.in-lesson .tabs-wrap{display:none}
 .gfig{text-align:center} .gfig svg{max-width:100%;height:auto}
 .gfig .gtab{margin:6px auto;border-collapse:collapse;font-size:15px} .gfig .gtab th,.gfig .gtab td{border:1px solid var(--line);padding:5px 12px}
 .qfig .gfig svg{width:100%}
+
+/* ── учебник: зачем читать, пример, самопроверка, переход к задачам ── */
+.bk-why{font-size:14px;line-height:1.5;color:var(--dim);background:var(--card2);border-radius:10px;padding:10px 12px;margin:0 0 12px}
+.bk-ex{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:14px 0}
+.bk-ex-t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.bk-ex-q{font-weight:600;margin:0 0 8px;line-height:1.45}
+.bk-ex-p{margin:6px 0;line-height:1.5}
+.bk-ex-f{margin:8px 0;padding:7px 11px;background:var(--card2);border-radius:8px;overflow-x:auto}
+.bk-ex-a{margin-top:10px;padding:8px 12px;background:var(--ok-bg,#e7f4ea);border-radius:8px;font-weight:600}
+.bk-ck{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:var(--card2)}
+.bk-ck-q{font-weight:600;line-height:1.45}
+.bk-ck-b{margin-top:8px;background:none;border:1px solid var(--line);border-radius:9px;padding:6px 12px;font:inherit;font-size:14px;color:var(--acc);cursor:pointer}
+.bk-ck-a{margin-top:8px;line-height:1.5} .bk-ck-a b{display:block;font-size:17px;margin-bottom:3px}
+.bk-op{margin:14px 0 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bk-op>span{width:100%;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.bk-opb{background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:7px 12px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;text-align:left}
+.bk-opb:hover{border-color:var(--acc)}
+.bk-link{display:block;width:100%;margin:8px 0 12px;padding:10px 14px;background:var(--card2);border:1px solid var(--line);
+  border-radius:11px;font:inherit;font-size:14px;color:var(--acc);cursor:pointer;text-align:left}

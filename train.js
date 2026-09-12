@@ -99,7 +99,8 @@ function trainRowsHTML(sid, n) {
   const d = (MAP[sid] || {})[String(n)]; if (!d) return "";
   const sub = SUB[sid];
   let h = `<h4 class="sec">Приёмы — проходи по порядку</h4>
-    <p class="foot" style="margin:0 0 10px">В каждом приёме: смотришь разбор, решаешь ту же задачу сам, потом похожую без подсказки. Приём закрыт, когда все похожие решены.</p>`;
+    <p class="foot" style="margin:0 0 10px">В каждом приёме: смотришь разбор, решаешь ту же задачу сам, потом похожую без подсказки. Приём закрыт, когда все похожие решены.</p>
+    <button class="bk-link" data-act="bk-read">Если с нуля — начни с учебника, он написан по порядку</button>`;
   (d.groups || []).forEach((g, gi) => {
     const p = trProgress(g), st = (S.train || {})[trStateKey(g.key)];
     const started = st && (st.i > 0 || Object.keys(st.tw).length);
@@ -131,7 +132,10 @@ function trTaskAsk(q) {
 
 function renderTrain() {
   const g = trGroup(trKey);
-  if (!g) { view = "num"; return renderNum(); }
+  if (!g) {                                    /* данные ещё грузятся или номер не выбран */
+    if (!MAP[curSubj]) return `<p class="rest">Загружаем задачи…</p>`;
+    view = "num"; return renderNum();
+  }
   const sub = SUB[curSubj], st = trState(g.key), seq = trSeq(g), p = trProgress(g);
   const i = Math.min(st.i, seq.length);
   const step = seq[i];
@@ -141,7 +145,8 @@ function renderTrain() {
       <div class="ls-ti"><b>${esc(g.title)}</b><span>${step ? `Подвид ${step.si + 1} из ${trSubs(g).length} · ${esc(step.s.title || "")}` : "Приём пройден"}</span></div>
       <div class="ls-step">${p.done} / ${p.total}</div>
     </div>
-    <div class="ls-bar"><i style="width:${seq.length ? i / seq.length * 100 : 0}%;--c:${sub.color}"></i></div>`;
+    <div class="ls-bar"><i style="width:${seq.length ? i / seq.length * 100 : 0}%;--c:${sub.color}"></i></div>
+    <button class="bk-link" data-act="bk-read" data-k="${esc(g.key)}">Теория к этому приёму — в учебнике</button>`;
 
   if (!step) {
     h += `<div class="ls-body"><div class="gwrap"><b>Приём закрыт</b>${p.done} из ${p.total} подвидов решены самостоятельно. Дальше такие задачи будешь узнавать с первого взгляда.</div>

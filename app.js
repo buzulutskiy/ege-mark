@@ -1573,6 +1573,23 @@ document.addEventListener("click", e => {
   if (a === "aidrop2") { aiAgain(t.dataset.id); return; }
   if (a === "qpick") { setQStep(t.dataset.id, "p" + t.dataset.i, +t.dataset.o + 1); render(); return; }
   if (a === "bkch") { const i = +t.dataset.i; bookOpen[i] = bookOpen[i] === false; render(); return; }
+  if (a === "bkck") { checkOpen[+t.dataset.i] = 1; render(); return; }
+  if (a === "bk-read") {                                   /* из приёма — в учебник */
+    bookKey = "fiz-" + curNum; bookJump = t.dataset.k || null; view = "book";
+    render(); window.scrollTo(0, 0); return;
+  }
+  if (a === "bk-go") {                                     /* из учебника — сразу решать */
+    const b = BOOK[bookKey] || {};
+    curSubj = b.subj || "fiz";
+    curNum = b.task || curNum || 1;
+    const key = t.dataset.k;
+    /* в учебник можно зайти сразу с главной, и тогда задачи ещё не загружены */
+    (async () => {
+      if (!MAP[curSubj]) { await loadBank(curSubj); await loadMap(curSubj); await loadQX(curSubj); await loadForm(curSubj); }
+      trOpen(key);
+    })();
+    return;
+  }
   if (a === "more") { moreOn[t.dataset.k] = 1; render(); return; }
   if (a === "qack") { setQStep(t.dataset.id, "i" + t.dataset.i, 1); render(); return; }
   if (a === "trm") { const id = t.dataset.id; tOpen[id] = !tOpen[id]; render(); return; }

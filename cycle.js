@@ -91,7 +91,8 @@ function renderSubject() {
 /* ─────────── экран номера: циклы внутри ─────────── */
 function renderNum() {
   const sid = curSubj, sub = SUB[sid], n = curNum;
-  const t = sub.byN[n], d = (MAP[sid] || {})[String(n)];
+  const t = sub && sub.byN ? sub.byN[n] : null, d = (MAP[sid] || {})[String(n)];
+  if (!t) { view = "week"; return renderHome(); }
   let h = `<div class="ls-top">
       <button class="ico" data-act="home">‹</button>
       <div class="ls-ti"><b>Задание ${n}. ${esc(t.name)}</b><span>${esc(sub.name)} · ${plural(t.p, "балл", "балла", "баллов")}</span></div>

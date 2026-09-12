@@ -85,6 +85,32 @@ const GRAPH = (function () {
     if (spec.origin !== false)
       s += `<text x="${ax - 6}" y="${ay + 16}" font-size="12.5" ${F} text-anchor="end">0</text>`;
 
+    /* закрашенные фигуры под линией: {pts:[[t,v],…], color, label} */
+    (spec.fills || []).forEach(fl => {
+      const pts = fl.pts || [];
+      if (pts.length < 2) return;
+      const poly = pts.map(p => px(p[0]) + "," + py(p[1])).join(" ");
+      s += `<polygon points="${poly}" fill="${fl.color || "#c8571a"}" fill-opacity="${fl.op || 0.18}"
+        stroke="${fl.color || "#c8571a"}" stroke-width="1" stroke-dasharray="${fl.dash || "0"}"/>`;
+      if (fl.label) {
+        /* fl.at = [t, v] — поставить подпись именно там; иначе в середине фигуры */
+        const cx = fl.at ? px(fl.at[0]) : pts.reduce((a, p) => a + px(p[0]), 0) / pts.length;
+        const cy = fl.at ? py(fl.at[1]) : pts.reduce((a, p) => a + py(p[1]), 0) / pts.length;
+        s += `<text x="${cx}" y="${cy + 5}" font-size="15" ${F} text-anchor="middle" fill="#111" font-weight="bold">${esc(fl.label)}</text>`;
+      }
+    });
+
+    /* как снять точку: пунктир от оси до линии и подписи «4 с» / «40 м» */
+    (spec.reads || []).forEach(r => {
+      const X0 = px(r[0]), Y0 = py(r[1]);
+      s += `<polyline fill="none" stroke="#1d4ed8" stroke-width="1.3" stroke-dasharray="5 3"
+        points="${X0},${ay} ${X0},${Y0} ${ax},${Y0}"/>`;
+      s += `<circle cx="${X0}" cy="${Y0}" r="4" fill="#1d4ed8"/>`;
+      /* подписи ставим в поле графика, чтобы не спорить с числами на осях */
+      if (r[2]) s += `<text x="${X0 + 8}" y="${ay - 8}" font-size="13" ${F} text-anchor="start" fill="#1d4ed8">${esc(r[2])}</text>`;
+      if (r[3]) s += `<text x="${ax + 8}" y="${Y0 - 8}" font-size="13" ${F} text-anchor="start" fill="#1d4ed8">${esc(r[3])}</text>`;
+    });
+
     /* пунктирные подсказки */
     (spec.guides || []).forEach(g => {
       s += `<polyline fill="none" stroke="#7a7a7a" stroke-width="1" stroke-dasharray="4 3" points="${g.map(p => px(p[0]) + "," + py(p[1])).join(" ")}"/>`;
@@ -105,6 +131,12 @@ const GRAPH = (function () {
 
     /* отдельные точки */
     (spec.marks || []).forEach(p => { s += `<circle cx="${px(p[0])}" cy="${py(p[1])}" r="3.2" fill="#111"/>`; });
+
+    /* подписи прямо на поле: {x, y, t, color, anchor} */
+    (spec.notes || []).forEach(n => {
+      s += `<text x="${px(n.x)}" y="${py(n.y)}" font-size="${n.size || 13}" ${F}
+        text-anchor="${n.anchor || "middle"}" fill="${n.color || "#111"}"${n.bold ? ' font-weight="bold"' : ""}>${esc(n.t)}</text>`;
+    });
 
     return s + `</svg>`;
   }
