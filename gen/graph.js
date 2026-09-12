@@ -19,7 +19,7 @@
    – стрелки на концах осей, подписи «t, с» и «x, м» у стрелок, как в учебнике. */
 
 const GRAPH = (function () {
-  const F = "font-family:'Times New Roman',Times,Georgia,serif";
+  const F = "style=\"font-family:'Times New Roman',Times,Georgia,serif\"";
 
   function fmt(v) {
     const s = String(Math.round(v * 1e6) / 1e6).replace(".", ",");

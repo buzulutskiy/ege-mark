@@ -8,7 +8,7 @@
    рисуются одним стилем: тонкая серая сетка не нужна, подписи — Times, как в бланке. */
 
 const DRAW = (function () {
-  const F = "font-family:'Times New Roman',Times,Georgia,serif";
+  const F = "style=\"font-family:'Times New Roman',Times,Georgia,serif\"";
   const INK = "#111", ACC = "#c8571a", BLUE = "#1d4ed8", GREEN = "#0f766e", MUTE = "#7a7a7a";
   const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
