@@ -15,7 +15,7 @@
     микровопрос → микровопрос → … → решение целиком и в тетрадь.
 И только после этого — такая же задача самостоятельно, а потом настоящие из банка.
 """
-import json, os, sys
+import json, os, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -63,17 +63,42 @@ def ideas_from_teach(t, part):
     return out
 
 
-def task_chain(tid, q, part, first):
-    """Одна задача → цепочка микрошагов."""
+def testable_steps(num=1, sid="fiz"):
+    """Спрашиваем у самого приложения, где мини-тест соберётся.
+
+    Раньше сборщик решал это сам по наличию цифр в строке — и ставил вопрос
+    там, где вариантов на самом деле не получается. Экран выходил пустой.
+    """
+    out = subprocess.run(["node", os.path.join(ROOT, "tools/picksteps.js"), str(num), sid],
+                         capture_output=True, text=True, cwd=ROOT)
+    if out.returncode != 0:
+        print("picksteps не отработал:", out.stderr.strip()[:200])
+        return {}
+    return json.loads(out.stdout or "{}")
+
+
+def task_chain(tid, q, part, raz, key=None, testable=None):
+    """Одна задача → цепочка микрошагов.
+
+    Порядок: прочитать → что дано и что найти → какая формула и почему →
+    и дальше по каждому действию разбора: сначала показали как, потом
+    мини-тест «а теперь сам выбери верную запись» → в конце решение целиком.
+    """
     out = [{"t": "read", "part": part, "id": tid}]
     if q.get("simple"):
         out[0]["simple"] = q["simple"]
+    if key:
+        out[0]["key"] = key
     if q.get("choice"):
         out.append({"t": "ask", "part": part, "id": tid})
     if (q.get("formula") or {}).get("f"):
         out.append({"t": "pickf", "part": part, "id": tid})
-    for k in range(len(q.get("steps") or [])):
-        out.append({"t": "micro", "part": part, "id": tid, "k": k})
+    z = raz.get(tid) or {}
+    ok_k = set((testable or {}).get(tid, []))
+    for k, st in enumerate(z.get("steps") or []):
+        out.append({"t": "demo", "part": part, "id": tid, "k": k})
+        if k in ok_k:
+            out.append({"t": "pick", "part": part, "id": tid, "k": k})
     out.append({"t": "whole", "part": part, "id": tid})
     return out
 
@@ -91,6 +116,7 @@ def build(blocks_dir, num=1, sid="fiz", only=None):
     raz = load(f"{ROOT}/lessons/razbor-{sid}-{num}.json")
     qx = load(f"{ROOT}/lessons/q-{sid}.json")
     groups = {g["key"]: g for g in plan["groups"]}
+    testable = testable_steps(num, sid)
 
     steps, missing = [], []
     for key, part in PORYADOK:
@@ -123,14 +149,16 @@ def build(blocks_dir, num=1, sid="fiz", only=None):
             steps.append(st)
 
         def put_teach(t):
+            # Строгое чередование: мысль — вопрос — мысль — вопрос.
+            # Две мысли подряд допускаем, только если вопросы кончились.
             run = 0
             for st in ideas_from_teach(t, part):
                 steps.append(st)
                 run += 1
-                if run >= 3 and pool:      # три мысли подряд — и проверяем
+                if run >= 2 and pool:
                     put_check()
                     run = 0
-            if run and pool:               # кусок кончился — закрываем вопросом
+            if run and pool:
                 put_check()
 
         # Теорию не вываливаем всю сразу. Первый кусок — общий вход в приём,
@@ -169,7 +197,7 @@ def build(blocks_dir, num=1, sid="fiz", only=None):
             if tasks:
                 first = tasks[0]
                 q = qx.get(first) or {}
-                steps += task_chain(first, q, part, True)
+                steps += task_chain(first, q, part, raz, key, testable)
                 if w and w.get("kind"):
                     steps.append({"t": "solve", "part": part, "key": key, "kind": w["kind"]})
                 for i in tasks[1:]:
