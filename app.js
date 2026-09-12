@@ -1479,10 +1479,12 @@ function render() {
     : view === "subs"    ? renderSubs()
     : view === "cycle"   ? renderCycle()
     : view === "train"   ? renderTrain()
+    : view === "crs"     ? renderCourseHome()
+    : view === "course"  ? renderCourse()
     : view === "book"    ? renderBook()
     : view === "week"    ? renderHome()
     : view === "track"   ? renderTrack() : renderStats();
-  document.body.classList.toggle("in-lesson", view === "lesson" || view === "cycle" || view === "train");
+  document.body.classList.toggle("in-lesson", view === "lesson" || view === "cycle" || view === "train" || view === "course");
   document.body.classList.toggle("parent", isParent());
   renderTop();
   $$(".tab").forEach(b => b.classList.toggle("on", b.dataset.v === view));
@@ -1521,6 +1523,14 @@ document.addEventListener("click", e => {
   }
   if (a === "cycall") { enterCycle(curCyc); return; }
   if (a === "train")    { trOpen(t.dataset.k); return; }
+  if (a === "cs-open")  { crsOpen(t.dataset.k); return; }
+  if (a === "cs-next")  { crsNext(); return; }
+  if (a === "cs-check") { crsCheck(); return; }
+  if (a === "cs-again") { crsAgain(); return; }
+  if (a === "cs-back")  { crsBack(); return; }
+  if (a === "cs-quiz")  { crsQuiz(+t.dataset.i, +t.dataset.o); return; }
+  if (a === "cs-restart") { crsRestart(); return; }
+  if (a === "cs-home")  { view = "crs"; render(); window.scrollTo(0, 0); return; }
   if (a === "tr-check") { trCheck(); return; }
   if (a === "tr-ok")    { trNext(); return; }
   if (a === "tr-again") { trAgain(); return; }
